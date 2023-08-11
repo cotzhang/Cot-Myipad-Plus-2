@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="../panelistic3.0-electron.css">
+	<script src="../panelistic3.0-electron.js"></script>
+	<link href="../maticons.css" rel="stylesheet">
+	<title>试题本</title>
+	<script src="../func.js"></script>
+	<style type="text/css"></style>
+	<script type="text/javascript">
+	let panelistic;
+	const electron = require("electron");
+	let allitems = []
+	let allqbitems = []
+	window.onload = function() {
+		panelistic = new Panelistic();
+		panelistic.initialize();
+
+		electron.ipcRenderer.sendToHost("salert", "正在同步数据");
+
+		let reqstr = `<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><DataSynchronizeGet xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><lpszClientID i:type="d:string">${getGlobalPackageId()}</lpszClientID><szInputOutputXML i:type="d:string">&lt;wmStudy&gt;
+   &lt;DataSynchronize skipcontent="true" version="1.1"/&gt;
+&lt;/wmStudy&gt;</szInputOutputXML></DataSynchronizeGet></v:Body></v:Envelope>`
+		autoRetryRequestWSDL("http://webservice.myi.cn/wmstudyservice/wsdl/GetPrivateData2", reqstr, (databack) => {
+			xml2js.parseString(databack, (err, result) => {
+				xml2js.parseString(result["SOAP-ENV:Envelope"]["SOAP-ENV:Body"][0]["AS:DataSynchronizeGetResponse"][0]["AS:szInputOutputXML"][0], (err, res) => {
+					electron.ipcRenderer.sendToHost("dismisssalert", "正在同步数据");
+					allitems = res.wmStudy.DataSynchronize[0].Item;
+					for (var i = 0; i < allitems.length; i++) {
+						if (allitems[i].$.packageId.indexOf("QuestionBook_Capture_") == 0) {
+							console.log(allitems[i].$)
+							allqbitems.push(allitems[i])
+						}
+					}
+					renderIntoPages(allqbitems)
+				})
+			});
+		}, 500, 500)
+	}
+
+	function renderUserList(list) {
+		let allstr = "";
+		for (var i = 0; i < list.length; i++) {
+			console.log(list[i].$)
+			allstr += model_questionbook(`https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${getGlobalPackageId()}&packageid=${list[i].$.packageId}`, list[i].$.modifyDate)
+		}
+		document.getElementById("cont").innerHTML = allstr;
+	}
+
+	function openLargeImg(url) {
+		fs.writeFile(getuserdatapath() + '/tempimg', url, () => {
+			electron.ipcRenderer.sendToHost('openLargeImg');
+		});
+	}
+
+	function downloadAll() {
+		simpleRequestC("https://master.lexuewang.cn:8003/GetQuestionBook", () => { electron.ipcRenderer.sendToHost("selPath") })
+	}
+
+	electron.ipcRenderer.on('folderPath', (event, folderPath) => {
+		let j = 0;
+		for (var i = 0; i < allitems.length; i++) {
+			electron.ipcRenderer.sendToHost("salert", "正在导出 " + i + "/" + allitems.length);
+			if (allitems[i].$.packageId.indexOf("QuestionBook_Capture_") == 0) {
+				console.log(allitems[i].$.packageId)
+				j++
+				electron.ipcRenderer.sendToHost('downloadFileTo', `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${getGlobalPackageId()}&packageid=${allitems[i].$.packageId}`, folderPath + "/错题本图片-" + allitems[i].$.modifyDate.replaceAll("-", "").replaceAll(" ", "").replaceAll(":", "") + ".jpg")
+			}
+			electron.ipcRenderer.sendToHost("dismisssalert");
+		}
+		electron.ipcRenderer.sendToHost("alert", "提示", "试题本全部解析完成，请等待后台下载进程完成。请勿立即退出主程序。", "确定");
+	})
+
+	function model_questionbook(url, modifyDate) {
+		return `<div class="panelistic_panel" style="width:calc(50% - 26px);display:inline-block;margin:4px;vertical-align:top">
+			<img src="${url}" onclick="openLargeImg('${url}')" style="width:100%;cursor:zoom-in"><input type="button" value="保存图片" onclick="electron.ipcRenderer.sendToHost('loaddata','${url}','saveas','错题本图片','错题本图片.jpg')">&nbsp;<span style="font-size:14px">${modifyDate}</span>
+		</div>`
+	}
+
+	var currpage = 0;
+	var totalpage = 0;
+
+	function renderIntoPages(arr) {
+		fullRenderingArr = arr;
+		currpage = 0;
+		if (arr.length == 0) {
+			currpage = -1;
+			totalpage = 0;
+			updatePgCnt()
+			renderUserList(false);
+		} else {
+			totalpage = Math.ceil(arr.length / 20);
+			renderUserList(fullRenderingArr.slice(currpage * 20, currpage * 20 + 20))
+			updatePgCnt()
+		}
+	}
+
+	function lastPage() {
+		if (currpage > 0) {
+			currpage--;
+			renderUserList(fullRenderingArr.slice(currpage * 20, currpage * 20 + 20))
+			updatePgCnt()
+		}
+	}
+
+	function nextPage() {
+		if (currpage < totalpage - 1) {
+			currpage++;
+			renderUserList(fullRenderingArr.slice(currpage * 20, currpage * 20 + 20))
+			updatePgCnt()
+		}
+	}
+
+	function updatePgCnt() {
+		document.getElementById("pageCounter").innerText = (currpage + 1) + "/" + totalpage;
+		document.getElementById("pageCounter2").innerText = (currpage + 1) + "/" + totalpage;
+	}
+	</script>
+</head>
+
+<body>
+	<div id="panelistic_content_sidebar_in" class="DM_fonttitlel">
+		<div class="panelistic_panel" style="font-size:14px"><input type="button" value="错题本照片批量导出" onclick="downloadAll()">
+			<div style="display:inline-block;width: calc(100% - 318px);"></div> <input type="button" value="navigate_before" class="material-icons" style="vertical-align: middle;" onclick="lastPage();">
+			<div class="panelistic_panel" style="width:60px;display: inline-block;vertical-align: middle;text-align: center;" id="pageCounter">0/0</div> <input type="button" style="vertical-align: middle;" value="navigate_next" class="material-icons" onclick="nextPage();">
+		</div>
+		<span class="panelistic_placeholder"></span>
+		<div class="panelistic_panel" id="cont">
+		</div>
+		<span class="panelistic_placeholder"></span>
+		<div class="panelistic_panel" style="font-size:14px"><input type="button" value="arrow_upward" style="vertical-align: middle;" class="material-icons" onclick="$('html,body,#panelistic_content_sidebar_in').animate({scrollTop: '0px'})"> 
+			<div style="display:inline-block;width: calc(100% - 215px);"></div> <input type="button" value="navigate_before" class="material-icons" style="vertical-align: middle;" onclick="$('html,body,#panelistic_content_sidebar_in').animate({scrollTop: '0px'}, 800);lastPage();">
+			<div class="panelistic_panel" style="width:60px;display: inline-block;vertical-align: middle;text-align: center;" id="pageCounter2">0/0</div> <input type="button" style="vertical-align: middle;" value="navigate_next" class="material-icons" onclick="$('html,body,#panelistic_content_sidebar_in').animate({scrollTop: '0px'}, 800);nextPage();">
+		</div>
+	</div>
+</body>
+
+</html>

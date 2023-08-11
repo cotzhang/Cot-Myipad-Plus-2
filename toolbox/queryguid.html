@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="../panelistic3.0-electron.css">
+	<script src="../panelistic3.0-electron.js"></script>
+	<title>用户GUID查询</title>
+	<script src="../func.js"></script>
+	<style type="text/css"></style>
+	<script type="text/javascript">
+	let panelistic;
+	const electron = require("electron");
+	window.onload = function() {
+		panelistic = new Panelistic();
+		panelistic.initialize();
+
+		if (fs.existsSync(getuserdatapath() + "/cageid")) {
+			document.getElementById("cageidtxt").value = fs.readFileSync(getuserdatapath() + "/cageid");
+			connect()
+		}
+	}
+
+	function loginByAccount() {
+		let account = document.getElementById("myiaccount").value;
+		getUserguidByAccount(account, (guid) => {
+			if (guid) {
+				electron.ipcRenderer.sendToHost("guidalert", guid)
+			}else{
+				electron.ipcRenderer.sendToHost("alert", "提示","查询失败，请检查用户是否存在","确定")
+			}
+		})
+	}
+	</script>
+</head>
+
+<body>
+	<div id="panelistic_content_sidebar_in" class="DM_fonttitlel">
+		<div class="panelistic_panel">
+			<div class="panelistic_panel_name">用户GUID查询</div><br><span class="panelistic_placeholder_large"></span>
+			<input type="text" placeholder="睿易账号" id="myiaccount">
+			<input type="button" value="查询并复制" onclick="loginByAccount()">
+		</div>
+	</div>
+</body>
+
+</html>

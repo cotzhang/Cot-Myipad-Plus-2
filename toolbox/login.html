@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="../panelistic3.0-electron.css">
+	<script src="../panelistic3.0-electron.js"></script>
+	<title>免密登录账号</title>
+	<script src="../func.js"></script>
+	<style type="text/css"></style>
+	<script type="text/javascript">
+	let panelistic;
+	const electron = require("electron");
+	window.onload = function() {
+		panelistic = new Panelistic();
+		panelistic.initialize();
+
+		if (fs.existsSync(getuserdatapath() + "/cageid")) {
+			document.getElementById("cageidtxt").value = fs.readFileSync(getuserdatapath() + "/cageid");
+			connect()
+		}
+	}
+
+	function loginByAccount() {
+		let account = document.getElementById("myiaccount").value;
+		getUserguidByAccount(account, (guid) => {
+			restfulRequest("UsersGetUserInfoByGUID", "szUserGUID=" + guid, (info) => {
+				try {
+					let allinfos = JSON.parse(JSON.parse(info).szUserInfoJson.replaceAll("members","teachers"));
+					let srcinfo = globalDataFile;
+					srcinfo.classes = allinfos.classes;
+					srcinfo.phonenumber = allinfos.phonenumber;
+					srcinfo.realname = allinfos.realname;
+					srcinfo.schoolguid = allinfos.schoolguid;
+					srcinfo.schoolname = allinfos.schoolname;
+					srcinfo.studentid = allinfos.studentid;
+					srcinfo.subcenterguid = allinfos.subcenterguid;
+					srcinfo.userguid = allinfos.userguid;
+					fs.writeFileSync(getuserdatapath() + "/data",(JSON.stringify(srcinfo)));
+					globalAccountFile.account = document.getElementById("myiaccount").value;
+					fs.writeFileSync(getuserdatapath() + "/account",(JSON.stringify(globalAccountFile)))
+					electron.ipcRenderer.sendToHost("reload")
+				} catch (err) {
+					electron.ipcRenderer.sendToHost("alert", "提示", "获取数据失败，请重试", "确定")
+				}
+			})
+		})
+	}
+	</script>
+</head>
+
+<body>
+	<div id="panelistic_content_sidebar_in" class="DM_fonttitlel">
+		<div class="panelistic_panel">
+			<div class="panelistic_panel_name">登录工具</div><br><span class="panelistic_placeholder_large"></span>
+			<input type="text" placeholder="睿易账号" id="myiaccount">
+			<input type="button" value="登录" onclick="loginByAccount()">
+		</div>
+	</div>
+</body>
+
+</html>

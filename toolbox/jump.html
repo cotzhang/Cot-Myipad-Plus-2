@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="../panelistic3.0-electron.css">
+	<script src="../panelistic3.0-electron.js"></script>
+	<title>GUID跳转工具</title>
+	<script src="../func.js"></script>
+	<style type="text/css"></style>
+	<script type="text/javascript">
+	let panelistic;
+	const electron = require("electron");
+	window.onload = function() {
+		panelistic = new Panelistic();
+		panelistic.initialize();
+
+		if (fs.existsSync(getuserdatapath() + "/cageid")) {
+			document.getElementById("cageidtxt").value = fs.readFileSync(getuserdatapath() + "/cageid");
+			connect()
+		}
+	}
+
+	function login() {
+		electron.shell.openExternal('https://' + (getGlobalServerAddr().split('.')[0] + 'res.' + getGlobalServerAddr().split('.')[1] + '.' + getGlobalServerAddr().split('.')[2]).split(':')[0] + ':8008' + '/login/home/goLogin?userid=' + document.getElementById('myiaccount').value)
+	}
+	</script>
+</head>
+
+<body>
+	<div id="panelistic_content_sidebar_in" class="DM_fonttitlel">
+		<div class="panelistic_panel">
+			<div class="panelistic_panel_name">登录工具</div><br><span class="panelistic_placeholder_large"></span>
+			<input type="text" placeholder="用户GUID" id="myiaccount">
+			<input type="button" value="登录" onclick="login()">
+		</div>
+	</div>
+</body>
+
+</html>

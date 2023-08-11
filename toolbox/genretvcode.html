@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="../panelistic3.0-electron.css">
+	<script src="../panelistic3.0-electron.js"></script>
+	<title>ID 生成工具</title>
+	<script src="../func.js"></script>
+	<style type="text/css"></style>
+	<link href="../maticons.css" rel="stylesheet">
+	<script type="text/javascript">
+	let panelistic;
+	const electron = require("electron");
+	window.onload = function() {
+		panelistic = new Panelistic();
+		panelistic.initialize();
+
+		const randomHexStrings = generateRandomHexStrings(100, 8);
+		document.getElementById('a').innerText = randomHexStrings[0].join(",")
+		document.getElementById('b').innerText = randomHexStrings[1].join(",")
+	}
+	</script>
+</head>
+
+<body>
+	<div id="panelistic_content_sidebar_in" class="DM_fonttitlel">
+		<textarea id="a" placeholder="src"></textarea>
+		<span class="panelistic_placeholder"></span>
+		<textarea id="b" placeholder="server"></textarea>
+		<span class="panelistic_placeholder"></span>
+		<input value="提交到服务器" type="button" onclick="submitToServer()">
+	</div>
+</body>
+
+</html>

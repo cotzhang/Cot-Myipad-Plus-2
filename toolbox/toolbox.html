@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="../panelistic3.0-electron.css">
+	<script src="../panelistic3.0-electron.js"></script>
+	<title>工具箱</title>
+	<script src="../func.js"></script>
+	<style type="text/css"></style>
+	<link href="../maticons.css" rel="stylesheet">
+	<script type="text/javascript">
+	let panelistic;
+	const electron = require("electron");
+	window.onload = function() {
+		panelistic = new Panelistic();
+		panelistic.initialize();
+		if (getGlobalUserguid() == "ae600da64696432a839532890d8d3f96") { document.getElementById("verifyAs").style.display = "block" }
+	}
+	</script>
+</head>
+
+<body>
+	<div id="panelistic_content_sidebar_in" class="DM_fonttitlel">
+		<div class="panelistic_panel" onclick="location.href='downloadall.html'"><span class="material-icons" style="vertical-align: middle;display: inline-block;font-size: 40px;">file_copy</span>&nbsp;<span style="vertical-align:middle;display: inline-block;font-size:14px;">
+				<span style="font-size:21px;font-weight:bold;">创建离线副本</span><br>
+				一键下载所有自主学习文件</span>
+		</div>
+		<span class="panelistic_placeholder"></span>
+		<div class="panelistic_panel" onclick="location.href='jump.html'"><span class="material-icons" style="vertical-align: middle;display: inline-block;font-size: 40px;">move_up</span>&nbsp;<span style="vertical-align:middle;display: inline-block;font-size:14px;">
+				<span style="font-size:21px;font-weight:bold;">GUID跳转工具</span><br>
+				快速登录睿易云（guid）</span>
+		</div>
+		<span class="panelistic_placeholder"></span>
+		<div class="panelistic_panel" onclick="location.href='queryguid.html'"><span class="material-icons" style="vertical-align: middle;display: inline-block;font-size: 40px;">find_in_page</span>&nbsp;<span style="vertical-align:middle;display: inline-block;font-size:14px;">
+				<span style="font-size:21px;font-weight:bold;">用户GUID查询</span><br>
+				查询用户 userguid</span>
+		</div>
+		<span class="panelistic_placeholder"></span>
+		<div class="panelistic_panel" onclick="location.href='seekmsg.html'"><span class="material-icons" style="vertical-align: middle;display: inline-block;font-size: 40px;">message</span>&nbsp;<span style="vertical-align:middle;display: inline-block;font-size:14px;">
+				<span style="font-size:21px;font-weight:bold;">讨论组消息查看</span><br>
+				通过讨论组guid查看及发送讨论组消息</span>
+		</div>
+		<span class="panelistic_placeholder"></span>
+		<div class="panelistic_panel" onclick="location.href='stream.html'"><span class="material-icons" style="vertical-align: middle;display: inline-block;font-size: 40px;">cast_connected</span>&nbsp;<span style="vertical-align:middle;display: inline-block;font-size:14px;">
+				<span style="font-size:21px;font-weight:bold;">推流服务器</span><br>
+				进行推流服务器9000端口测试</span>
+		</div>
+		<span class="panelistic_placeholder"></span>
+		<div class="panelistic_panel" onclick="electron.ipcRenderer.sendToHost('openryy')"><span class="material-icons" style="vertical-align: middle;display: inline-block;font-size: 40px;">cloud</span>&nbsp;<span style="vertical-align:middle;display: inline-block;font-size:14px;">
+				<span style="font-size:21px;font-weight:bold;">睿易云</span><br>
+				启动睿易云练习界面</span>
+		</div>
+		<span id="verifyAs" style="display:none">
+			<span class="panelistic_placeholder"></span>
+			<div class="panelistic_panel" onclick="location.href='login.html'"><span class="material-icons" style="vertical-align: middle;display: inline-block;font-size: 40px;">pattern</span>&nbsp;<span style="vertical-align:middle;display: inline-block;font-size:14px;">
+					<span style="font-size:21px;font-weight:bold;">免密登录账号</span><br>
+					无需密码登录睿易云教学账号</span>
+			</div>
+			<span class="panelistic_placeholder"></span>
+			<div class="panelistic_panel" onclick="location.href='genretvcode.html'"><span class="material-icons" style="vertical-align: middle;display: inline-block;font-size: 40px;">password</span>&nbsp;<span style="vertical-align:middle;display: inline-block;font-size:14px;">
+					<span style="font-size:21px;font-weight:bold;">ID 生成器</span><br>
+					批量生成 ID 工具</span>
+			</div>
+		</span>
+	</div>
+</body>
+
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="../panelistic3.0-electron.css">
+	<script src="../panelistic3.0-electron.js"></script>
+	<script src="../func.js"></script>
+	<title>CloudRetv</title>
+	<link href="../maticons.css" rel="stylesheet">
+	<style type="text/css"></style>
+	<script type="text/javascript">
+	let panelistic;
+	const electron = require("electron");
+	const path = require('path')
+	const { ipcRenderer } = electron
+
+	window.onload = function() {
+		panelistic = new Panelistic();
+		panelistic.initialize();
+	}
+	</script>
+</head>
+
+<body>
+	<div id="panelistic_content_sidebar_in" class="DM_fonttitlel">
+		<div class="panelistic_panel">
+			<div class="panelistic_panel_name">服务状态</div><br><span class="panelistic_placeholder_large"></span>
+			<div class="panelistic_panel" style="font-size:14px">CloudRetv 已激活并运行中，感谢您的支持</div>
+			<!--span class="panelistic_placeholder"></span>
+			<input type="text" placeholder="CloudRetvCode" id="retvcodefield">
+			<input type="button" value="验证 CloudRetvCode 并启用" onclick="verifyAndEnable(document.getElementById('retvcodefield').value)">
+			<input type="button" value="联系开发者" style="color:red" onclick="contactDeveloper()"><br-->
+		</div>
+	</div>
+</body>
+
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="../panelistic3.0-electron.css">
+	<script src="../panelistic3.0-electron.js"></script>
+	<script src="../func.js"></script>
+	<title>我的班级</title>
+	<link href="../maticons.css" rel="stylesheet">
+	<style type="text/css"></style>
+	<script type="text/javascript">
+	let panelistic;
+	const electron = require("electron");
+	const path = require('path')
+	const { ipcRenderer } = electron
+
+	window.onload = function() {
+		panelistic = new Panelistic();
+		panelistic.initialize();
+		render()
+	}
+
+
+	function model_stu(realname, guid, type, username, classid) {
+		return `<span class="panelistic_placeholder"></span>
+			<div class="panelistic_checkbox" style="padding-top:8px" onclick="infoUser('${guid}',${classid})"><img style="height:25px;width:25px;vertical-align:middle;" src="https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${type != 0 ? username + '_teacherpad' : 'myipad_' + username}&packageid=UserAvatar_${username}" onerror="this.src='../src/no_pic.jpg'"><span class="panelistic_checkbox_text" style="color:${type==0?"black":"red"};vertical-align:middle;">${realname}</span></div>`
+	}
+
+	function model_classstart(name, id) {
+		return `<div class="panelistic_panel" style="font-size:14px">
+			<div class="panelistic_panel_name">${name}</div><br><span class="panelistic_placeholder"></span><span class="panelistic_placeholder"></span><input type="button" value="显示/隐藏成员 ▼" onclick="document.getElementById('ctn_${id}').style.display=='none'?document.getElementById('ctn_${id}').style.display='block':document.getElementById('ctn_${id}').style.display='none'"><div id="ctn_${id}" style='display:none'>`
+	}
+
+	function render() {
+		let classes = globalDataFile.classes;
+		let totalstr = ""
+		for (var i = 0; i < classes.length; i++) {
+			totalstr += model_classstart(classes[i].name, i)
+			for (var j = 0; j < classes[i].teachers.length; j++) {
+				totalstr += model_stu(classes[i].teachers[j].realname, classes[i].teachers[j].guid, classes[i].teachers[j].type, classes[i].teachers[j].username, i)
+			}
+			totalstr += "</div></div><span class=\"panelistic_placeholder\"></span>"
+		}
+		document.getElementById("panelistic_content_sidebar_in").insertAdjacentHTML("beforeend", totalstr)
+	}
+
+	const findObject = (array, key, value) => {
+		return array.find(object => object[key] === value);
+	};
+
+	function infoUser(userguid, i) {
+		let allinfos = findObject(globalDataFile.classes[i].teachers, 'guid', userguid);
+		fs.writeFileSync(getuserdatapath() + "/userinfo", JSON.stringify(allinfos));
+		location.href = __dirname + "/userdetails.html"
+	}
+
+	const findClassesObject = (objname) => {
+		let totlist = []
+		for (var i = 0; i < globalDataFile.classes.length; i++) {
+			if (findObject(globalDataFile.classes[i].teachers, 'guid', objname)) {
+				totlist.push(findObject(globalDataFile.classes[i].teachers, 'guid', objname))
+			}
+		}
+		return totlist[0]
+	}
+	</script>
+</head>
+
+<body>
+	<div id="panelistic_content_sidebar_in" class="DM_fonttitlel">
+	</div>
+	</div>
+</body>
+
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="../panelistic3.0-electron.css">
+	<script src="../panelistic3.0-electron.js"></script>
+	<title>讨论组消息查看</title>
+	<script src="../func.js"></script>
+	<style type="text/css"></style>
+	<script type="text/javascript">
+	let panelistic;
+	const electron = require("electron");
+	window.onload = function() {
+		panelistic = new Panelistic();
+		panelistic.initialize();
+
+		if (fs.existsSync(getuserdatapath() + "/cageid")) {
+			document.getElementById("cageidtxt").value = fs.readFileSync(getuserdatapath() + "/cageid");
+			connect()
+		}
+	}
+
+	function loginByAccount() {
+		let imid = document.getElementById("myiaccount").value;
+		fs.writeFileSync(getuserdatapath() + '/iminfo', JSON.stringify({ guid: imid,name:"讨论组消息查看" }));
+		location.href = (__dirname + '/../imchat.html')
+	}
+	</script>
+</head>
+
+<body>
+	<div id="panelistic_content_sidebar_in" class="DM_fonttitlel">
+		<div class="panelistic_panel">
+			<div class="panelistic_panel_name">讨论组消息查看</div><br><span class="panelistic_placeholder_large"></span>
+			<input type="text" placeholder="讨论组guid" id="myiaccount">
+			<input type="button" value="启动讨论组界面" onclick="loginByAccount()">
+		</div>
+	</div>
+</body>
+
+</html>

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="../panelistic3.0-electron.css">
+	<script src="../panelistic3.0-electron.js"></script>
+	<script src="../func.js"></script>
+	<title>学校成员</title>
+	<link href="../maticons.css" rel="stylesheet">
+	<style type="text/css"></style>
+	<script type="text/javascript">
+	let panelistic;
+	const electron = require("electron");
+	const path = require('path')
+	const { ipcRenderer } = electron
+	let onlineUsersList;
+
+	window.onload = function() {
+		panelistic = new Panelistic();
+		panelistic.initialize();
+		document.getElementById('mysch').innerText = globalDataFile.schoolname + "\n" + globalDataFile.schoolguid;
+
+		ipcRenderer.sendToHost("salert", "正在获取在线用户状态")
+
+		getOnlineList((olur) => {
+			ipcRenderer.sendToHost("dismisssalert")
+
+			onlineUsersList = olur
+			let olUsers = getUserCount(onlineUsersList);
+			allOlUsersCount = onlineUsersList.length;
+			document.getElementById("stuol").innerText = olUsers[0]
+			document.getElementById("teacherol").innerText = olUsers[1]
+			document.getElementById("rrtol").innerText = olUsers[2]
+
+			if (fs.existsSync(getuserdatapath() + "/schoolconsole")) {
+				totalArr = JSON.parse(fs.readFileSync(getuserdatapath() + "/schoolconsole"));
+				startgenUserList();
+			} else {
+				startgenUserList();
+			}
+
+			ipcRenderer.sendToHost("dismisssalert")
+		})
+	}
+
+	function getOnlineList(callback) {
+		autoRetryRequest(`https://${getGlobalServerAddr()}/clients.json`, "", [], (data) => {
+			callback(storeObjToArr(data))
+		}, 1400, 800, true)
+	}
+
+	function storeObjToArr(obj) {
+		const keysArray = Object.keys(JSON.parse(obj));
+		return keysArray.map(key => ({ key, value: obj[key] }));
+	}
+
+	//getUserguidByUserid(userid,cb)
+
+	let totalArr = [];
+
+	let allOlUsersCount = 0;
+	let currProcessProgress = 0;
+
+	function getUserCount(arr) {
+		let cnt1 = 0,
+			cnt2 = 0,
+			cnt3 = 0;
+		for (var i = 0; i < arr.length; i++) {
+			if (arr[i].key.indexOf("myipad_") != -1) {
+				cnt1++;
+			} else if (arr[i].key.indexOf("_teacherpad") != -1) {
+				cnt2++;
+			} else { cnt3++ }
+		}
+		return [cnt1, cnt2, cnt3];
+	}
+
+	function storeUserToTotalArr(userobj, key, userclass) {
+		var hasfound = false
+		for (var i = 0; i < totalArr.length; i++) {
+			if (totalArr[i].key == key) {
+				hasfound = true;
+				if (totalArr[i].userclasses) {
+					addItemIfNotExists(totalArr[i].userclasses, userclass);
+				} else {
+					totalArr[i].userclasses = [userclass];
+				}
+				break;
+			}
+		}
+		if (!hasfound) {
+			userobj.key = key;
+			userobj.userclasses = [userclass];
+			totalArr.push(userobj);
+		}
+	}
+
+	function addItemIfNotExists(arr, newItem) {
+		if (!arr.includes(newItem)) {
+			arr.push(newItem);
+		}
+	}
+
+	function parseClass(classinfo, classname) {
+		for (var i = 0; i < classinfo.length; i++) {
+			storeUserToTotalArr(classinfo[i], classinfo[i].username, classname)
+		}
+	}
+
+	function getUserList(usersinfo) {
+		for (var i = 0; i < usersinfo.length; i++) {
+			let classname = usersinfo[i].name;
+			if (usersinfo[i].teachers) {
+				parseClass(usersinfo[i].teachers, classname)
+			} else if (usersinfo[i].members) {
+				parseClass(usersinfo[i].members, classname)
+			}
+		}
+	}
+
+	var totalreqcnt = 0;
+
+	function getUserListByUserId(userid, callback, callbackErr) {
+		totalreqcnt++;
+		getUserguidByUserid(userid, (guid) => {
+			autoRetryRestfulRequest("UsersGetUserInfoByGUID", "szUserGUID=" + guid, (info) => {
+				if (userid.indexOf("classmode_")!=-1) {callbackErr();return;}
+				console.log(userid)
+				try{
+
+				let allinfos = JSON.parse(JSON.parse(info).szUserInfoJson).classes;
+				getUserList(allinfos);
+				callback()
+			}catch(err){
+				callbackErr()
+			}
+			})
+		})
+	}
+
+	function existsInTotalArr(item) {
+		for (var i = 0; i < totalArr.length; i++) {
+			if (totalArr[i].key == item) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	function getUseridByPackageid(packageId) {
+		return packageId.replaceAll("myipad_", "").replaceAll("_teacherpad", "");
+	}
+
+	function genUserList(callback) {
+		currProcessProgress = 0;
+		var counter = 0; // 计数器
+		var i = 0; // 索引
+		var processNextUser = function() {
+			// 判断是否还有待处理的用户
+			if (i < onlineUsersList.length) {
+				if (!existsInTotalArr(getUseridByPackageid(onlineUsersList[i].key))) {
+					getUserListByUserId(getUseridByPackageid(onlineUsersList[i].key), function() {
+						ipcRenderer.sendToHost("dismisssalert")
+						ipcRenderer.sendToHost("salert", "正在构建学生总列表 " + counter + "/" + onlineUsersList.length)
+						// 在getUserListByUserId回调函数内部执行
+						counter++; // 增加计数器
+						if (counter === onlineUsersList.length) {
+							// 所有getUserListByUserId函数都已经调用完成
+							// 执行另一个回调函数
+							callback();
+						} else {
+							// 处理下一个用户
+							i++;
+							processNextUser();
+						}
+					},()=>{
+						counter++; // 增加计数器
+						if (counter === onlineUsersList.length) {
+							// 所有getUserListByUserId函数都已经调用完成
+							// 执行另一个回调函数
+							callback();
+						} else {
+							// 处理下一个用户
+							i++;
+							processNextUser();
+						}
+					});
+				} else {
+					counter++; // 增加计数器
+					// 处理下一个用户
+					i++;
+					processNextUser();
+				}
+			} else {
+				// 所有用户都已处理完成
+				callback();
+			}
+		};
+
+		processNextUser(); // 开始处理第一个用户
+	}
+
+
+	function startgenUserList() {
+		ipcRenderer.sendToHost("salert", "正在构建学生总列表")
+		genUserList(() => {
+			fs.writeFileSync(getuserdatapath() + "/schoolconsole", JSON.stringify(totalArr))
+			ipcRenderer.sendToHost("dismisssalert")
+			// ipcRenderer.sendToHost("alert","提示","学生总列表构建完成")
+			renderIntoPages(totalArr)
+			// renderUserList(totalArr)
+		})
+	}
+
+	function model_user(name, ryid, classinfo, guid, isol) {
+		return `
+			<span class="panelistic_placeholder"></span>
+			<div class="panelistic_panel" style="font-size:14px"><div class="panelistic_panel" style="display: inline-block;width: 90px;${isol?"color:#3a3":""}">${ryid}</div> <div class="panelistic_panel" style="display: inline-block;width: 120px;">${name}</div> <div class="panelistic_panel" style="display: inline-block;width: calc(100% - 353px);white-space: nowrap;overflow: hidden;text-overflow: ellipsis;vertical-align: middle;" title="${classinfo}">${classinfo}</div> <input type="button" value="详细信息" onclick="infoUser('${guid}')"></div>`
+	}
+
+	function nothingSearched() {
+		return `
+			<span class="panelistic_placeholder"></span>
+			<div class="panelistic_panel" style="font-size:14px">没有查询到相关结果</div>`
+	}
+
+	function infoUser(userguid) {
+		for (var i = 0; i < totalArr.length; i++) {
+			if (totalArr[i].guid == userguid) {
+				totalArr[i].username = totalArr[i].key;
+				fs.writeFileSync(getuserdatapath() + "/userinfo", JSON.stringify(totalArr[i]));
+				location.href = __dirname + "/userdetails.html"
+				break;
+			}
+		}
+	}
+
+	function isOnline(userkey) {
+		for (var i = 0; i < onlineUsersList.length; i++) {
+			if (getUseridByPackageid(onlineUsersList[i].key) == userkey) {
+				return true;
+			}
+		}
+		return false
+	}
+
+	function renderUserList(userlist) {
+		let totalstr = "";
+		if (!userlist) {
+			totalstr += nothingSearched();
+		} else {
+			for (var i = 0; i < userlist.length; i++) {
+				totalstr += model_user(userlist[i].realname, userlist[i].key, userlist[i].userclasses.join("、"), userlist[i].guid, isOnline(userlist[i].key))
+			}
+		}
+		document.getElementById("resspan").innerHTML = totalstr;
+	}
+
+	var fullRenderingArr = [];
+	var currpage = 0;
+	var totalpage = 0;
+
+	function renderIntoPages(arr) {
+		fullRenderingArr = arr;
+		currpage = 0;
+		if (arr.length == 0) {
+			currpage = -1;
+			totalpage = 0;
+			updatePgCnt()
+			renderUserList(false);
+		} else {
+			totalpage = Math.ceil(arr.length / 10);
+			renderUserList(fullRenderingArr.slice(currpage * 10, currpage * 10 + 10))
+			updatePgCnt()
+		}
+	}
+
+	function lastPage() {
+		if (currpage > 0) {
+			currpage--;
+			renderUserList(fullRenderingArr.slice(currpage * 10, currpage * 10 + 10))
+			updatePgCnt()
+		}
+	}
+
+	function nextPage() {
+		if (currpage < totalpage - 1) {
+			currpage++;
+			renderUserList(fullRenderingArr.slice(currpage * 10, currpage * 10 + 10))
+			updatePgCnt()
+		}
+	}
+
+	function updatePgCnt() {
+		document.getElementById("pageCounter").innerText = (currpage + 1) + "/" + totalpage;
+	}
+
+	function search() {
+		let selidx = document.getElementById('itemsel').selectedIndex;
+		let attacharr = ["realname", "userclassesstr", "key", "guid"]
+		doSearch(attacharr[selidx], document.getElementById("searchkeyword").value)
+	}
+
+	function doSearch(searchitm, keyword) {
+		let result = [];
+		for (var i = 0; i < totalArr.length; i++) {
+			if (searchitm != "userclassesstr") {
+				if (totalArr[i][searchitm].indexOf(keyword) != -1) { result.push(totalArr[i]) }
+			} else {
+				for (var j = 0; j < totalArr[i].userclasses.length; j++) {
+					if (totalArr[i].userclasses[j] == keyword) {
+						result.push(totalArr[i])
+					}
+				}
+			}
+		}
+		renderIntoPages(result)
+	}
+	</script>
+</head>
+
+<body>
+	<div id="panelistic_content_sidebar_in" class="DM_fonttitlel">
+		<div class="panelistic_panel">
+			<div class="panelistic_panel_name">我的学校</div><br><span class="panelistic_placeholder_large"></span>
+			<div class="panelistic_code"><code id="mysch">登录失败！请重新打开主程序</code></div>
+		</div>
+		<span class="panelistic_placeholder"></span>
+		<div class="panelistic_panel">
+			<div class="panelistic_panel_name">在线成员信息</div><br><span class="panelistic_placeholder_large"></span>
+			<div class="panelistic_panel" style="display: inline-block;">学生在线<br><span id="stuol" style="font-size:24px;font-weight:bold">N/A</span></div>
+			<div class="panelistic_panel" style="display: inline-block;">教师在线<br><span id="teacherol" style="font-size:24px;font-weight:bold">N/A</span></div>
+			<div class="panelistic_panel" style="display: inline-block;">睿易通在线<br><span id="rrtol" style="font-size:24px;font-weight:bold">N/A</span></div>
+		</div>
+		<span class="panelistic_placeholder"></span>
+		<div class="panelistic_panel">
+			<div class="panelistic_panel_name">成员列表</div><br><span class="panelistic_placeholder_large"></span>
+			<div class="panelistic_panel" style="font-size:14px"><select id="itemsel">
+					<option>姓名</option>
+					<option>班级名称</option>
+					<option>睿易账号</option>
+					<option>用户GUID</option>
+				</select> <input type="text" id="searchkeyword"> <input type="button" value="搜索" onclick="search()">
+				<div style="display:inline-block;width: calc(100% - 521px);"></div> <input type="button" value="navigate_before" class="material-icons" style="vertical-align: middle;" onclick="lastPage();">
+				<div class="panelistic_panel" style="width:60px;display: inline-block;vertical-align: middle;text-align: center;" id="pageCounter">0/0</div> <input type="button" style="vertical-align: middle;" value="navigate_next" class="material-icons" onclick="nextPage();">
+			</div>
+			<span id="resspan"></span>
+		</div>
+	</div>
+</body>
+
+</html>

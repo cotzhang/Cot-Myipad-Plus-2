@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="../panelistic3.0-electron.css">
+	<script src="../panelistic3.0-electron.js"></script>
+	<script src="../func.js"></script>
+	<title>平板定位</title>
+	<link href="../maticons.css" rel="stylesheet">
+	<style type="text/css"></style>
+	<script type="text/javascript">
+	let panelistic;
+	const electron = require("electron");
+	const path = require('path')
+	const { ipcRenderer } = electron
+
+	let floor = 1;
+	let maxFloor = 0;
+
+	function getTagName(floor, i) {
+		return (floor * 100 + i + 1) + "";
+	}
+
+	function getStudentByQuery(querystr) {
+		let results = []
+		let keyss = []
+		for (const keys in onlineUsersList) {
+			keyss.push(keys)
+		}
+		for (var i = 0; i < keyss.length; i++) {
+			try {
+				// console.log(onlineUsersList[keyss[i]][0])
+				if (onlineUsersList[keyss[i]][0]) {
+					if (onlineUsersList[keyss[i]][0].ssid) {
+						if (onlineUsersList[keyss[i]][0].ssid.includes(querystr)) {
+							results.push({ key: keyss[i], value: onlineUsersList[keyss[i]][0] })
+						}
+					}
+				}
+			} catch (err) {}
+		}
+		return results;
+	}
+
+	function switchToDxl() {
+		document.getElementById("mapcontent").style.transform = "scale(0.65)";
+		document.getElementById("mapcontent").style.translate = "-1201px -137px";
+		currbuildinguserlist = spliceUserArrToFloors(getStudentByQuery("dxl"), "dxl");
+		let userlist;
+		if (currbuildinguserlist.length == 0) {log("No students!",2);return;}
+		if (currbuildinguserlist[0].length == 0 && currbuildinguserlist[1].length != 0) {
+			userlist = currbuildinguserlist[1];
+			floor = 2;
+		}else{
+			userlist = currbuildinguserlist[0];
+			floor = 1;
+		}
+		console.log(userlist)
+		showBuildingPanel("笃学楼", floor, genStuStrBySingleFloorUserList(userlist))
+		maxFloor = 5;
+	}
+
+	function switchToGzl() {
+		document.getElementById("mapcontent").style.transform = "scale(0.65)";
+		document.getElementById("mapcontent").style.translate = "-1636px -137px";
+		currbuildinguserlist = spliceUserArrToFloors(getStudentByQuery("gzl"), "gzl");
+		let userlist;
+		if (currbuildinguserlist.length == 0) {log("No students!",2);return;}
+		if (currbuildinguserlist[0].length == 0 && currbuildinguserlist[1].length != 0) {
+			userlist = currbuildinguserlist[1];
+			floor = 2;
+		}else{
+			userlist = currbuildinguserlist[0];
+			floor = 1;
+		}
+		console.log(userlist)
+		showBuildingPanel("格致楼", floor, genStuStrBySingleFloorUserList(userlist))
+		maxFloor = 8;
+	}
+
+	function switchToSml() {
+		document.getElementById("mapcontent").style.transform = "scale(1)";
+		document.getElementById("mapcontent").style.translate = "-2024px -1449px";
+		currbuildinguserlist = spliceUserArrToFloors(getStudentByQuery("sml"), "sml");
+		let userlist;
+		if (currbuildinguserlist.length == 0) {log("No students!",2);return;}
+		if (currbuildinguserlist[0].length == 0 && currbuildinguserlist[1].length != 0) {
+			userlist = currbuildinguserlist[1];
+			floor = 2;
+		}else{
+			userlist = currbuildinguserlist[0];
+			floor = 1;
+		}
+		console.log(userlist)
+		showBuildingPanel("善美楼", floor, genStuStrBySingleFloorUserList(userlist))
+		maxFloor = 6;
+	}
+
+	var buildingname = ""
+
+	function switchToXjxl() {
+		document.getElementById("mapcontent").style.transform = "scale(0.65)";
+		document.getElementById("mapcontent").style.translate = "-705px -1413px";
+		currbuildinguserlist = spliceUserArrToFloors(getStudentByQuery("xjxl"), "xjxl");
+		let userlist;
+		if (currbuildinguserlist[0].length == 0 && currbuildinguserlist[1].length != 0) {
+			userlist = currbuildinguserlist[1];
+			floor = 2;
+		}else{
+			userlist = currbuildinguserlist[0];
+			floor = 1;
+		}
+		console.log(userlist)
+		showBuildingPanel("弘毅楼", floor, genStuStrBySingleFloorUserList(userlist))
+		maxFloor = 6;
+	}
+
+	function renderFloor(floorcnt) {
+		let userlist;
+		userlist = currbuildinguserlist[floorcnt-1];
+		showBuildingPanel("", floorcnt, genStuStrBySingleFloorUserList(userlist))
+	}
+
+	function resetMap() {
+		clearFloorMarks()
+		hideBuildingPanel()
+		document.getElementById("mapcontent").style.transform = "scale(0.15)";
+		document.getElementById("mapcontent").style.translate = "-248px 0px";
+	}
+
+	function clearFloorMarks() {
+		let flm = $(".floortag");
+		for (var i = 0; i < flm.length; i++) {
+			flm[i].remove()
+		}
+	}
+
+	window.onload = function() {
+		panelistic = new Panelistic();
+		panelistic.initialize();
+
+		if (getGlobalServerAddr() != "gzzx.lexuewang.cn:8003") {
+			document.getElementById('maputils').style.display = "none"
+		}
+
+		// ipcRenderer.sendToHost("salert", "正在获取在线用户状态")
+
+		getOnlineList((olur) => {
+			ipcRenderer.sendToHost("dismisssalert")
+
+			onlineUsersList = olur
+			let olUsers = getUserCount(onlineUsersList);
+			allOlUsersCount = onlineUsersList.length;
+
+			if (fs.existsSync(getuserdatapath() + "/schoolconsole")) {
+				totalArr = JSON.parse(fs.readFileSync(getuserdatapath() + "/schoolconsole"));
+				startgenUserList();
+			} else {
+				startgenUserList();
+			}
+			getOnlineList2((olur2) => {
+				onlineUsersList = olur2;
+
+				render_text("笃学楼<br>（" + getStudentByQuery("dxl").length + "）", 1818, 411, "","switchToDxl()")
+
+				render_text("格致楼<br>（" + getStudentByQuery("gzl").length + "）", 2740, 364, "","switchToGzl()")
+
+				render_text("弘毅楼<br>（" + getStudentByQuery("xjxl").length + "）", 1476, 2491, "","switchToXjxl()")
+
+				render_text("善美楼<br>（" + getStudentByQuery("sml").length + "）", 2281, 1643, "","switchToSml()")
+
+				render_text("食堂", 480, 680, "")
+
+				render_text("学生宿舍", 1115, 344, "")
+
+				ipcRenderer.sendToHost("dismisssalert")
+			})
+		})
+	}
+
+	function spliceUserArrToFloors(userarr, keyword) {
+		let floors = []
+		for (var i = 0; i < userarr.length; i++) {
+			try {
+				let currfloor = userarr[i].value["ssid"].replaceAll(keyword, "")[0];
+				new Number(getUserClassByObj(userarr[i]));
+				if (floors[currfloor - 1]) { floors[currfloor - 1].push(userarr[i]) } else { floors[currfloor - 1] = [userarr[i]] };
+			} catch (err) { log(err.message, 2) }
+		}
+		for (var i = 0; i < floors.length; i++) {
+			floors[i] = groupByRoom(floors[i]);
+		}
+		return floors;
+	}
+
+	function groupByRoom(arr) {
+		const grouped = {};
+		if (!arr) { return []; }
+
+		arr.forEach(item => {
+			room = getUserClassByObj(item);
+			if (!grouped[room]) {
+				grouped[room] = { room, content: [] };
+			}
+			grouped[room].content.push(item);
+		});
+
+		return Object.values(grouped);
+	}
+
+	let totalArr = [];
+
+	let allOlUsersCount = 0;
+	let currProcessProgress = 0;
+
+	function getUserCount(arr) {
+		let cnt1 = 0,
+			cnt2 = 0,
+			cnt3 = 0;
+		for (var i = 0; i < arr.length; i++) {
+			if (arr[i].key.indexOf("myipad_") != -1) {
+				cnt1++;
+			} else if (arr[i].key.indexOf("_teacherpad") != -1) {
+				cnt2++;
+			} else { cnt3++ }
+		}
+		return [cnt1, cnt2, cnt3];
+	}
+
+	function storeUserToTotalArr(userobj, key, userclass) {
+		var hasfound = false
+		for (var i = 0; i < totalArr.length; i++) {
+			if (totalArr[i].key == key) {
+				hasfound = true;
+				if (totalArr[i].userclasses) {
+					addItemIfNotExists(totalArr[i].userclasses, userclass);
+				} else {
+					totalArr[i].userclasses = [userclass];
+				}
+				break;
+			}
+		}
+		if (!hasfound) {
+			userobj.key = key;
+			userobj.userclasses = [userclass];
+			totalArr.push(userobj);
+		}
+	}
+
+	function addItemIfNotExists(arr, newItem) {
+		if (!arr.includes(newItem)) {
+			arr.push(newItem);
+		}
+	}
+
+	function parseClass(classinfo, classname) {
+		for (var i = 0; i < classinfo.length; i++) {
+			storeUserToTotalArr(classinfo[i], classinfo[i].username, classname)
+		}
+	}
+
+	function getUserList(usersinfo) {
+		for (var i = 0; i < usersinfo.length; i++) {
+			let classname = usersinfo[i].name;
+			if (usersinfo[i].teachers) {
+				parseClass(usersinfo[i].teachers, classname)
+			} else if (usersinfo[i].members) {
+				parseClass(usersinfo[i].members, classname)
+			}
+		}
+	}
+
+	var totalreqcnt = 0;
+
+	function getUserListByUserId(userid, callback, callbackErr) {
+		totalreqcnt++;
+		getUserguidByUserid(userid, (guid) => {
+			autoRetryRestfulRequest("UsersGetUserInfoByGUID", "szUserGUID=" + guid, (info) => {
+				if (userid.indexOf("classmode_") != -1) { callbackErr(); return; }
+				console.log(userid)
+				try {
+
+					let allinfos = JSON.parse(JSON.parse(info).szUserInfoJson).classes;
+					getUserList(allinfos);
+					callback()
+				} catch (err) {
+					callbackErr()
+				}
+			})
+		})
+	}
+
+	function existsInTotalArr(item) {
+		for (var i = 0; i < totalArr.length; i++) {
+			if (totalArr[i].key == item) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	function getUseridByPackageid(packageId) {
+		return packageId.replaceAll("myipad_", "").replaceAll("_teacherpad", "");
+	}
+
+	function genUserList(callback) {
+		currProcessProgress = 0;
+		var counter = 0; // 计数器
+		var i = 0; // 索引
+		var processNextUser = function() {
+			// 判断是否还有待处理的用户
+			if (i < onlineUsersList.length) {
+				if (!existsInTotalArr(getUseridByPackageid(onlineUsersList[i].key))) {
+					getUserListByUserId(getUseridByPackageid(onlineUsersList[i].key), function() {
+						ipcRenderer.sendToHost("dismisssalert")
+						ipcRenderer.sendToHost("salert", "正在构建学生总列表 " + counter + "/" + onlineUsersList.length)
+						// 在getUserListByUserId回调函数内部执行
+						counter++; // 增加计数器
+						if (counter === onlineUsersList.length) {
+							// 所有getUserListByUserId函数都已经调用完成
+							// 执行另一个回调函数
+							callback();
+						} else {
+							// 处理下一个用户
+							i++;
+							processNextUser();
+						}
+					}, () => {
+						counter++; // 增加计数器
+						if (counter === onlineUsersList.length) {
+							// 所有getUserListByUserId函数都已经调用完成
+							// 执行另一个回调函数
+							callback();
+						} else {
+							// 处理下一个用户
+							i++;
+							processNextUser();
+						}
+					});
+				} else {
+					counter++; // 增加计数器
+					// 处理下一个用户
+					i++;
+					processNextUser();
+				}
+			} else {
+				// 所有用户都已处理完成
+				callback();
+			}
+		};
+
+		processNextUser(); // 开始处理第一个用户
+	}
+
+
+	function startgenUserList() {
+		ipcRenderer.sendToHost("salert", "正在构建学生总列表")
+		genUserList(() => {
+			fs.writeFileSync(getuserdatapath() + "/schoolconsole", JSON.stringify(totalArr))
+			ipcRenderer.sendToHost("dismisssalert")
+		})
+	}
+
+	function model_user(name, ryid, classinfo, guid) {
+		return `
+			<span class="panelistic_placeholder"></span>
+			<div class="panelistic_panel" style="font-size:14px"><div class="panelistic_panel" style="display: inline-block;width: 90px;">${ryid}</div> <div class="panelistic_panel" style="display: inline-block;width: 120px;">${name}</div> <div class="panelistic_panel" style="display: inline-block;width: calc(100% - 353px);white-space: nowrap;overflow: hidden;text-overflow: ellipsis;vertical-align: middle;" title="${classinfo}">${classinfo}</div> <input type="button" value="详细信息" onclick="infoUser('${guid}')"></div>`
+	}
+
+	function nothingSearched() {
+		return `
+			<span class="panelistic_placeholder"></span>
+			<div class="panelistic_panel" style="font-size:14px">没有查询到相关结果</div>`
+	}
+
+	function infoUser(userguid) {
+		for (var i = 0; i < totalArr.length; i++) {
+			if (totalArr[i].guid == userguid) {
+				totalArr[i].username = totalArr[i].key;
+				fs.writeFileSync(getuserdatapath() + "/userinfo", JSON.stringify(totalArr[i]));
+				location.href = __dirname + "/userdetails.html"
+				break;
+			}
+		}
+	}
+
+	var fullRenderingArr = [];
+	var currpage = 0;
+	var totalpage = 0;
+
+
+	function render_text(text, x, y, isFloorRestricted, onclickstr) {
+		let txtstr = `<span style="position:absolute;${isFloorRestricted?"background: #fffa;padding: 1px;margin:3px;border-radius: 3px;backdrop-filter:blur(2px);font-size:5px;":"font-size: 40px;padding: 4px;white-space:nowrap;"};top:${y}px;left:${x}px;text-align:center;" onclick="${onclickstr?onclickstr:""}" class="${isFloorRestricted?"floortag":""}">${text}</span>`
+		document.getElementById("txtlayer").innerHTML += txtstr;
+	}
+
+	function selectBuilding() {
+		electron.ipcRenderer.sendToHost("selectBuilding");
+	}
+
+	electron.ipcRenderer.on('selectBuildingResult', function(event, arg) {
+		if (arg == "dxl") {
+			switchToDxl()
+		} else if (arg == "gzl") {
+			switchToGzl()
+		} else if (arg == "sml") {
+			switchToSml()
+		} else {
+			switchToXjxl()
+		}
+	});
+
+	function upstairs() {
+		if (floor <= maxFloor-1) {
+			renderFloor(++floor);
+		}
+	}
+
+	function downstairs() {
+		if (floor > 1) {
+			renderFloor(--floor);
+		}
+	}
+
+	function getOnlineList(callback) {
+		autoRetryRequest(`https://${getGlobalServerAddr()}/clients.json`, "", [], (data) => {
+			callback(storeObjToArr(data))
+		}, 1400, 800, true)
+	}
+
+	function storeObjToArr(obj) {
+		const keysArray = Object.keys(JSON.parse(obj));
+		return keysArray.map(key => ({ key, value: obj[key] }));
+	}
+
+	function getOnlineList2(callback) {
+		autoRetryRequest(`https://${getGlobalServerAddr()}/clients.json`, "", [], (data) => {
+			callback(JSON.parse(data))
+		}, 1400, 800, true)
+	}
+
+	function findLocation(nameoraccount) {
+
+		ipcRenderer.sendToHost("salert", "正在获取在线用户状态")
+
+		getOnlineList2((olur) => {
+			ipcRenderer.sendToHost("dismisssalert")
+			const keysArray = Object.keys(olur);
+			const keyValueArray = keysArray.map(key => ({ key, value: olur[key] }));
+			console.log(keyValueArray)
+
+			for (var i = 0; i < keyValueArray.length; i++) {
+				if (getUseridByPackageid(keyValueArray[i].key) == nameoraccount) {
+					//ok!
+					try {
+						let ssid = keyValueArray[i].value[0].ssid
+						if (ssid.indexOf("dxl") != -1 || ssid.indexOf("gzl") != -1 || ssid.indexOf("xjxl") != -1) {
+							ipcRenderer.sendToHost("alert", "定位信息", "姓名：" + getUserRealnameByUserid(getUseridByPackageid(keyValueArray[i].key)) + "<br>当前位置：广州中学 " + ssid.replaceAll("dxl", "笃学楼（教学楼）").replaceAll("gzl", "格致楼（实验楼）").replaceAll("xjxl", "弘毅楼（高三楼）") + "<br>IP 地址：" + keyValueArray[i].value[0].wanip, "确定")
+						} else if (ssid.indexOf("CIN") != -1 || ssid.indexOf("GZZX") != -1) {
+							ipcRenderer.sendToHost("alert", "定位信息", "姓名：" + getUserRealnameByUserid(getUseridByPackageid(keyValueArray[i].key)) + "<br>当前位置：广州中学" + "<br>IP 地址：" + keyValueArray[i].value[0].wanip, "确定")
+						} else if (ssid.indexOf("<unknown ssid>") != -1) {
+							ipcRenderer.sendToHost("alert", "定位信息", "姓名：" + getUserRealnameByUserid(getUseridByPackageid(keyValueArray[i].key)) + "<br>当前位置：未知" + "<br>IP 地址：" + keyValueArray[i].value[0].wanip, "确定")
+						} else {
+							ipcRenderer.sendToHost("alert", "定位信息", "姓名：" + getUserRealnameByUserid(getUseridByPackageid(keyValueArray[i].key)) + "<br>当前位置：未知" + "<br>WIFI 名称：" + keyValueArray[i].value[0].ssid + "<br>IP 地址：" + keyValueArray[i].value[0].wanip, "确定")
+						}
+					} catch (err) {
+						ipcRenderer.sendToHost("alert", "提示", "未找到用户相关定位", "确定")
+					}
+					return;
+				}
+				if (getUserRealnameByUserid(getUseridByPackageid(keyValueArray[i].key)) == nameoraccount) {
+					//ok!
+					try {
+						let ssid = keyValueArray[i].value[0].ssid
+						if (ssid.indexOf("dxl") != -1 || ssid.indexOf("gzl") != -1 || ssid.indexOf("xjxl") != -1) {
+							ipcRenderer.sendToHost("alert", "定位信息", "姓名：" + getUserRealnameByUserid(getUseridByPackageid(keyValueArray[i].key)) + "<br>当前位置：广州中学 " + ssid.replaceAll("dxl", "笃学楼（教学楼）").replaceAll("gzl", "格致楼（实验楼）").replaceAll("xjxl", "弘毅楼（高三楼）") + "<br>IP 地址：" + keyValueArray[i].value[0].wanip, "确定")
+						} else if (ssid.indexOf("CIN") != -1 || ssid.indexOf("GZZX") != -1) {
+							ipcRenderer.sendToHost("alert", "定位信息", "姓名：" + getUserRealnameByUserid(getUseridByPackageid(keyValueArray[i].key)) + "<br>当前位置：广州中学" + "<br>IP 地址：" + keyValueArray[i].value[0].wanip, "确定")
+						} else if (ssid.indexOf("<unknown ssid>") != -1) {
+							ipcRenderer.sendToHost("alert", "定位信息", "姓名：" + getUserRealnameByUserid(getUseridByPackageid(keyValueArray[i].key)) + "<br>当前位置：未知" + "<br>IP 地址：" + keyValueArray[i].value[0].wanip, "确定")
+						} else {
+							ipcRenderer.sendToHost("alert", "定位信息", "姓名：" + getUserRealnameByUserid(getUseridByPackageid(keyValueArray[i].key)) + "<br>当前位置：未知" + "<br>WIFI 名称：" + keyValueArray[i].value[0].ssid + "<br>IP 地址：" + keyValueArray[i].value[0].wanip, "确定")
+						}
+					} catch (err) {
+						ipcRenderer.sendToHost("alert", "提示", "未找到用户相关定位", "确定")
+					}
+					return;
+				}
+			}
+			ipcRenderer.sendToHost("alert", "提示", "所定位的平板用户可能不在线或不存在，请检查关键词后再试。", "确定")
+		})
+	}
+
+	function getUserRealnameByUserid(userid) {
+		for (var j = 0; j < totalArr.length; j++) {
+			if (totalArr[j].username == userid) {
+				return totalArr[j].realname;
+			}
+		}
+	}
+
+	function model_buildinginfo(buildname, floor, stustr) {
+		return `
+					<b style="font-size: 14px;">${buildname} </b><span style="font-size: 14px;">${floor}F</span>
+					<span class="panelistic_placeholder"></span>
+					${stustr}`
+	}
+
+	function showBuildingPanel(buildname, floor, stustr) {
+		if (buildname) {
+			buildingname = buildname;
+		}else{
+			buildname = buildingname;
+		}
+		document.getElementById("arrowkeys").style.display = "inline";
+		document.getElementById("buildingpanel").innerHTML = model_buildinginfo(buildname, floor, stustr)
+		document.getElementById("buildingpanel").style.display = "block";
+	}
+
+	function hideBuildingPanel() {
+		document.getElementById("arrowkeys").style.display = "none";
+		document.getElementById("buildingpanel").style.display = "none";
+	}
+
+	function getUserClassByObj(obj) {
+		return obj.value.ssid.replaceAll("dxl", "").replaceAll("sml", "").replaceAll("xjxl", "").replaceAll("gzl", "");
+	}
+
+	function model_room(roomno, roomcnt) {
+		return `<span class="panelistic_placeholder"></span><div class="panelistic_panel"><b>${roomno} (${roomcnt})</b><br>`
+	}
+
+	function genStuStrBySingleFloorUserList(usrlist) {
+		let totalstr = ""
+		for (var i = 0; i < usrlist.length; i++) {
+			if (!usrlist[i]) { continue; }
+			totalstr += model_room(usrlist[i].room, usrlist[i].content.length)
+			let roomstr = ""
+			usrlist[i].content.forEach(item => {
+				let userinfo = getUserInfoFromTotalArrByUserId(getUseridByPackageid(item.key));
+				roomstr += `<span onclick="infoUser('${userinfo.guid}')" style="cursor: pointer" title="查看详情">${userinfo.realname}</span>,`;
+			})
+			totalstr += roomstr.substr(0, roomstr.length - 1) + "</div>"
+		}
+		return totalstr;
+	}
+
+	function getUserInfoFromTotalArrByUserId(userid) {
+		for (var j = 0; j < totalArr.length; j++) {
+			item = totalArr[j];
+			if (item.key == userid) {
+				return item;
+			}
+		}
+		return "";
+	}
+	</script>
+</head>
+
+<body>
+	<div id="panelistic_content_sidebar_in" class="DM_fonttitlel">
+		<span id="maputils">
+			<div class="panelistic_panel" style="height: 60%;overflow: hidden;background-color: #7A7A7A;height: calc(100% - 116px);">
+				<div class="panelistic_panel" style="position:absolute;right: 16px;z-index: 999;">
+					<input type="button" value="zoom_in" class="material-icons" onclick="selectBuilding()">
+					<span class="panelistic_placeholder"></span>
+					<input type="button" value="zoom_out" class="material-icons" onclick="resetMap()">
+					<span id="arrowkeys" style="display:none;">
+						<span class="panelistic_placeholder"></span>
+						<input type="button" value="arrow_upward" class="material-icons" onclick="upstairs()">
+						<span class="panelistic_placeholder"></span>
+						<input type="button" value="arrow_downward" class="material-icons" onclick="downstairs()">
+					</span>
+				</div>
+				<div class="panelistic_panel" style="position:absolute;right: 80px;z-index: 998;width: 200px;height: 178px;backdrop-filter:blur(4px);overflow: auto;display: none;font-size: 13px;" id="buildingpanel">
+				</div>
+				<div id="mapcontent" style="position:relative;transform: scale(0.15);translate: -248px 0px;"><img src="../src/gzzxmap.jpg" style="position:absolute;" ondragstart="return false"><span id="txtlayer"></span></div>
+			</div>
+			<span class="panelistic_placeholder"></span>
+		</span>
+		<div class="panelistic_panel">
+			<div class="panelistic_panel_name">平板定位</div><br><span class="panelistic_placeholder_large"></span>
+			<input type="text" placeholder="姓名或睿易账号" id="nameipt"> <input type="button" value="定位" onclick="findLocation(document.getElementById('nameipt').value)">
+		</div>
+	</div>
+	<script type="text/javascript">
+	let isDragging = false;
+	let lastX = 0;
+	let lastY = 0;
+	let scaleValue = 0.15;
+	let translateX = 0;
+	let translateY = 0;
+
+	const mapcontent = document.getElementById("mapcontent");
+
+	// Zoom in
+	function zoomIn() {
+		refTranslateLevel()
+		refZoomLevel()
+		scaleValue += 0.1;
+		updateTransform();
+	}
+
+	// Zoom out
+	function zoomOut() {
+		refTranslateLevel()
+		refZoomLevel()
+		scaleValue -= 0.1;
+		updateTransform();
+	}
+
+	// Update the transform style with current scaleValue and translateX, translateY
+	function updateTransform() {
+		mapcontent.style.transform = `scale(${scaleValue})`;
+		mapcontent.style.translate = `${translateX}px ${translateY}px`
+	}
+
+	// Mousewheel event for zooming
+	mapcontent.addEventListener("wheel", (e) => {
+		e.preventDefault();
+		if (e.deltaY > 0) {
+			zoomOut();
+		} else {
+			zoomIn();
+		}
+	});
+
+	// Mousedown event for dragging
+	mapcontent.addEventListener("mousedown", (e) => {
+		refZoomLevel()
+		refTranslateLevel()
+		isDragging = true;
+		lastX = e.clientX;
+		lastY = e.clientY;
+		mapcontent.style.cursor = "grabbing";
+	});
+
+	// Mousemove event for updating translate while dragging
+	document.addEventListener("mousemove", (e) => {
+		if (isDragging) {
+			const deltaX = e.clientX - lastX;
+			const deltaY = e.clientY - lastY;
+			translateX += deltaX;
+			translateY += deltaY;
+			lastX = e.clientX;
+			lastY = e.clientY;
+			updateTransform();
+		}
+	});
+
+	// Mouseup event to stop dragging
+	document.addEventListener("mouseup", () => {
+		isDragging = false;
+		mapcontent.style.cursor = "grab";
+	});
+
+	function refZoomLevel() {
+		let str = mapcontent.style.transform;
+		var zoomValStart = str.indexOf("(") + 1; // 找到左括号的位置并向后移动一位
+		var zoomValEnd = str.indexOf(")"); // 找到右括号的位置
+		scaleValue = new Number(str.substring(zoomValStart, zoomValEnd)); // 使用 substring 方法截取 zoomVal
+	}
+
+	function refTranslateLevel() {
+		let str = mapcontent.style.translate;
+		var translateLevel = str.split(" ");
+		translateX = new Number(translateLevel[0].replaceAll("px", ""));
+		if (translateLevel[1]) { translateY = new Number(translateLevel[1].replaceAll("px", "")); } else { translateY = 0 }
+	}
+	</script>
+</body>
+
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="panelistic3.0-electron.css">
+	<script src="panelistic3.0-electron.js"></script>
+	<title>我的设备</title>
+	<script src="func.js"></script>
+	<style type="text/css"></style>
+	<link href="maticons.css" rel="stylesheet">
+	<script type="text/javascript">
+	let panelistic;
+	var qr = require('qr-image');
+	const electron = require("electron");
+	window.onload = function() {
+		panelistic = new Panelistic();
+		panelistic.initialize();
+
+		if (fs.existsSync(getuserdatapath() + "/cageid")) {
+			// document.getElementById("cageidtxt").value = fs.readFileSync(getuserdatapath() + "/cageid");
+			connect(fs.readFileSync(getuserdatapath() + "/cageid"))
+		}
+		getDevState()
+
+		setInterval(() => {
+			getDevState()
+		}, 1000);
+	}
+
+	function validateString(str) {
+		const regex = /^[0-9a-f]{6}$/;
+		return regex.test(str);
+	}
+
+	let cmdarr = ["disablesnp", "foreverreboot", "resettosnp", "disablelenovolauncher", "enablelenovolauncher", "disableapps", "enableapps", "cmd", ""]
+	let chinesearr = ["禁止登入少年派", "开机后强制低电量关机", "完全恢复为普通平板", "禁用联想桌面", "启用联想桌面", "一键禁用", "一键启用", "cmd", "无"]
+
+	let globalCageId = "";
+
+	
+
+	electron.ipcRenderer.on('cageInputRet', (event, args) => {
+		execCommandCage("cmd:" + args, true)
+	})
+
+	electron.ipcRenderer.on('confirmResettosnp', (event, args) => {
+		execCommandCage('resettosnp', true)
+	})
+
+	electron.ipcRenderer.on('folderName', (event, args) => {
+		connectSave(args)
+	})
+
+	const remote = require("@electron/remote");
+
+	function qrpair() {
+		genQrConnecter();
+		electron.ipcRenderer.sendToHost("alert", "设备连接", "<div class='panelistic_panel'>请使用 Android 手机扫码连接设备</div><span class='panelistic_placeholder_large'></span><img src='" + getuserdatapath() + "/connectqr.png'>", "关闭")
+	}
+
+	function qrdld() {
+		genQrConnecter();
+		electron.ipcRenderer.sendToHost("alert", "下载", "<div class='panelistic_panel'>请使用 Android 手机扫描以下二维码下载</div><span class='panelistic_placeholder_large'></span><img src='" + getuserdatapath() + "/connectqr.png'>", "关闭")
+	}
+
+	function genQrConnecter() {
+		fs.writeFileSync(getuserdatapath() + '/connectqr.png', (qr.imageSync("https://cotzhang.cn/padplusandroid#" + globalAccountFile.account + "&" + JSON.parse(fs.readFileSync(getuserdatapath() + "/account")).password + "&" + getGlobalServerAddr())))
+	}
+
+	function codepair() {
+		electron.ipcRenderer.sendToHost("input", "使用配对码连接", "请输入在您的设备上显示的配对码", "000000", "确定")
+	}
+
+	function getDevState() {
+		getTemporaryStorageToGzzxSingle("cmp_android_userstate.html" + globalAccountFile.account, (result) => {
+			result = result.split(":")
+			console.log(result);
+			document.getElementById("havedevices").style.display="block";
+			document.getElementById("nodevicenotice").style.display="none";
+			document.getElementById("devname").innerText=result[0];
+			checkTimeDifference(result[2], () => {
+				document.getElementById("devstates").innerText = "设备在线（PadPlus For Android "+result[1]+"）";
+			}, (diff) => {
+				document.getElementById("devstates").innerText = "设备" + diff + "前在线（PadPlus For Android "+result[1]+"）";
+			})
+		},()=>{})
+	}
+	</script>
+</head>
+
+<body>
+	<div id="panelistic_content_sidebar_in" class="DM_fonttitlel">
+		<div class="panelistic_panel">
+			<div class="panelistic_panel_name">连接设备</div><br><span class="panelistic_placeholder_large"></span>
+			<button onclick="qrpair()" style="font-size: auto;display: inline-block;vertical-align: middle;" class="btn" name=""><span class="material-icons" style="vertical-align: middle;">qr_code</span> <span style="vertical-align: middle;">扫描二维码连接设备</span></button>
+			<button onclick="codepair()" style="font-size: auto;display: inline-block;vertical-align: middle;" class="btn" name=""><span class="material-icons" style="vertical-align: middle;">pin</span> <span style="vertical-align: middle;">使用配对码连接设备</span></button>
+			<button onclick="qrdld()" style="font-size: auto;display: inline-block;vertical-align: middle;" class="btn" name=""><span class="material-icons" style="vertical-align: middle;">download</span> <span style="vertical-align: middle;">下载 PadPlus for Android</span></button>
+		</div>
+		<span class="panelistic_placeholder"></span>
+		<div class="panelistic_panel" id="noconnecttext">
+			<div class="panelistic_panel_name">我的设备</div><br><span class="panelistic_placeholder_large"></span>
+			<div class="panelistic_panel" id="nodevicenotice"><span style="font-size:14px">未绑定 Android 设备，请扫描二维码或使用配对码连接设备</span></div>
+			<div class="panelistic_panel" id="havedevices" style="display: none;"><img src="src/phone.png" style="height: 45px;vertical-align: middle;"><span style="font-size:14px;vertical-align: middle;display: inline-block;"><b style="font-size:16px" id="devname">Test Device</b><br><span id="devstates"></span></span></div>
+		</div>
+		<span id="devpanel" style="display:none;">
+			<span class="panelistic_placeholder"></span>
+			<div class="panelistic_panel">
+				<div class="panelistic_panel_name">设备状态</div><br><span class="panelistic_placeholder_large"></span>
+				<div style="vertical-align: middle;">
+					<img src="./src/padimg.png" style="height:80px;padding:8px;vertical-align: middle;" ondragstart="return false">
+					<div id="rightbar" style="vertical-align: middle;display: inline-block;"><b style="font-size:24px;padding-bottom: 8px;">Lenovo TB-X605M</b><br><span id="devstate" style="font-size:15px">请稍等<br>正在获取设备状态</span></div>
+				</div>
+			</div>
+			<span class="panelistic_placeholder"></span>
+			<div class="panelistic_panel">
+				<div class="panelistic_panel_name">指令操作</div><br><span class="panelistic_placeholder_large"></span>
+				<div class="panelistic_panel" style="font-size:14px">
+					<span style="width:100%">当前正在执行指令：<span id="cmdspan">未知</span> </span> <input type="button" value="清空指令" onclick="execCommandCage('.',true)">
+				</div>
+				<span class="panelistic_placeholder"></span>
+				<div class="panelistic_panel" style="font-size:14px">
+					<div class="panelistic_panel_name">桌面设置</div><br><span class="panelistic_placeholder_large"></span>
+					<input type="button" value="禁用联想桌面" onclick="execCommandCage('disablelenovolauncher',true)">
+					<input type="button" value="启用联想桌面" onclick="execCommandCage('enablelenovolauncher',true)">
+				</div>
+				<span class="panelistic_placeholder"></span>
+				<div class="panelistic_panel" style="font-size:14px">
+					<div class="panelistic_panel_name">应用隐藏功能</div><br><span class="panelistic_placeholder_large"></span>
+					<input type="button" value="一键禁用所有应用并隐藏" onclick="execCommandCage('disableapps',true)">
+					<input type="button" value="一键启用所有应用" onclick="execCommandCage('enableapps',true)">
+				</div>
+				<span class="panelistic_placeholder"></span>
+				<div class="panelistic_panel" style="font-size:14px">
+					<div class="panelistic_panel_name">其他功能</div><br><span class="panelistic_placeholder_large"></span>
+					<input type="button" value="禁止启动少年派" onclick="execCommandCage('disablesnp',false)">
+					<input type="button" value="开机后强制低电量关机" onclick="execCommandCage('foreverreboot',false)">
+				</div>
+				<span class="panelistic_placeholder"></span>
+				<div class="panelistic_panel" style="font-size:14px">
+					<div class="panelistic_panel_name">快速操作</div><br><span class="panelistic_placeholder_large"></span>
+					<input type="button" value="显示功能面板" onclick="execCommandCage('cmd:am start -n com.netspace.myipad/com.netspace.library.activity.AccountConfigActivity2',true)">
+					<input type="button" value="激活流体手势" onclick="execCommandCage('cmd:settings put secure enabled_accessibility_services com.fb.fluid/com.fb.fluid.MainAccessibilityService 1',true)">
+					<input type="button" value="解锁选项" onclick="execCommandCage('cmd:am start -n com.android.settings/com.android.settings.password.ChooseLockGeneric',true)">
+					<input type="button" value="设置图案" onclick="execCommandCage('cmd:am start -n com.android.settings/com.android.settings.password.SetupChooseLockPattern',true)">
+					<input type="button" value="设置PIN" onclick="execCommandCage('cmd:am start -n com.android.settings/com.android.settings.password.SetupChooseLockPassword',true)">
+				</div>
+				<span class="panelistic_placeholder"></span>
+				<div class="panelistic_panel" style="font-size:14px">
+					<div class="panelistic_panel_name">高级功能</div><br><span class="panelistic_placeholder_large"></span>
+					<input type="button" value="远程执行超级用户shell命令" onclick="execCommandCageInput()">
+				</div>
+				<span class="panelistic_placeholder"></span>
+				<div class="panelistic_panel" style="font-size:14px">
+					<div class="panelistic_panel_name">重置功能</div><br><span class="panelistic_placeholder_large"></span>
+					<input type="button" value="清空第三方应用数据并完全恢复为普通平板" style="background-color: #cc000055;" onclick="electron.ipcRenderer.sendToHost('askResetsnp')">
+				</div>
+			</div>
+			<span class="panelistic_placeholder"></span>
+			<div class="panelistic_panel" style="font-size:14px">
+				<div class="panelistic_panel_name">设备管理</div><br><span class="panelistic_placeholder_large"></span>
+				<input type="button" value="解绑该设备" onclick="fs.unlinkSync(getuserdatapath()+'/cageid');window.location.reload()">
+			</div>
+			<span id="helpreg" style="display:none;">
+				<span class="panelistic_placeholder"></span>
+				<div class="panelistic_panel" style="font-size:14px">
+					<div class="panelistic_panel_name">辅助注册</div><br><span class="panelistic_placeholder_large"></span>
+					<input type="text" placeholder="未注册的设备ID" id="regtxt"> <input onclick="register()" type="button" value="注册">
+				</div>
+			</span>
+		</span>
+	</div>
+</body>
+
+</html>

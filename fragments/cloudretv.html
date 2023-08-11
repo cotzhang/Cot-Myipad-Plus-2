@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="../panelistic3.0-electron.css">
+	<script src="../panelistic3.0-electron.js"></script>
+	<script src="../func.js"></script>
+	<title>CloudRetv</title>
+	<link href="../maticons.css" rel="stylesheet">
+	<style type="text/css"></style>
+	<script type="text/javascript">
+	let panelistic;
+	const electron = require("electron");
+	const path = require('path')
+	const { ipcRenderer } = electron
+
+	window.onload = function() {
+		panelistic = new Panelistic();
+		panelistic.initialize();
+	}
+
+	let ServiceName = "CloudRetvCode"
+
+	function contactDeveloper(){
+		electron.ipcRenderer.sendToHost("alert","联系开发者","微信：cotzhang<br>QQ：3514048093<br>添加好友请注明学校、睿易账号。","关闭")
+	}
+	</script>
+</head>
+
+<body>
+	<div id="panelistic_content_sidebar_in" class="DM_fonttitlel">
+		<div class="panelistic_panel">
+			<img src="../src/tencentcloud.png" style="height: 60px;margin: 8px;user-select: none;" ondragstart="return false"><br>
+			<div class="panelistic_panel" style="font-size: 14px;">
+				PadPlus 2 的部分功能需要调用腾讯云服务及API。<br>
+				PadPlus 2 基于 CloudRetv 调用腾讯云服务及API。<br>
+				开通 CloudRetv 后，您的部分数据（包括但不限于姓名、睿易账号及sessionid）可能会被发送到腾讯云服务器进行处理。
+			</div>
+			<span class="panelistic_placeholder"></span>
+			<div class="panelistic_panel" style="font-size: 14px;">
+				PadPlus 2 的 CloudRetv 部分服务使用如下的腾讯云服务及API：
+				<a href="#" onclick="electron.shell.openExternal('https://cloud.tencent.com/product/cvm')">云服务器 CVM</a>
+				<a href="#" onclick="electron.shell.openExternal('https://cloud.tencent.com/product/lighthouse')">轻量应用服务器</a>
+				<a href="#" onclick="electron.shell.openExternal('https://cloud.tencent.com/product/tke')">容器服务 TKE</a>
+				<a href="#" onclick="electron.shell.openExternal('https://cloud.tencent.com/product/apigw')">API 网关</a>
+				<a href="#" onclick="electron.shell.openExternal('https://cloud.tencent.com/product/cos')">对象存储 COS</a>
+				<a href="#" onclick="electron.shell.openExternal('https://cloud.tencent.com/product/ci')">数据万象 CI</a>
+				<a href="#" onclick="electron.shell.openExternal('https://cloud.tencent.com/product/cdb')">云数据库 TencentDB for MySQL</a>
+				<a href="#" onclick="electron.shell.openExternal('https://cloud.tencent.com/product/eip')">弹性公网 IP</a>
+				<a href="#" onclick="electron.shell.openExternal('https://cloud.tencent.com/product/clb')">负载均衡 CLB</a>
+				<a href="#" onclick="electron.shell.openExternal('https://cloud.tencent.com/product/cdn')">内容分发网络 CDN</a>
+				<a href="#" onclick="electron.shell.openExternal('https://cloud.tencent.com/product/im')">即时通信 IM</a>
+				<a href="#" onclick="electron.shell.openExternal('https://cloud.tencent.com/product/sms')">短信 SMS</a>
+				<a href="#" onclick="electron.shell.openExternal('https://cloud.tencent.com/product/ses')">邮件推送 SES</a>
+				<a href="#" onclick="electron.shell.openExternal('https://cloud.tencent.com/product/ssl')">SSL 证书</a>
+				<a href="#" onclick="electron.shell.openExternal('https://cloud.tencent.com/product/api')">云 API</a>
+				<a href="#" onclick="electron.shell.openExternal('https://cloud.tencent.com/product/cns')">DNS 解析 DNSPod</a><br>
+				您可以点击查看相关服务详情及协议
+			</div>
+			<span class="panelistic_placeholder"></span>
+			<div class="panelistic_checkbox"><input type="checkbox" id="startup"><span class="panelistic_checkbox_text">我已阅读并同意<a href="#" onclick="electron.shell.openExternal('https://cloud.tencent.com/document/product/301/1967')">《腾讯云服务协议》</a></span></div>
+			<span class="panelistic_placeholder"></span>
+			<div class="panelistic_checkbox"><input type="checkbox" id="startup"><span class="panelistic_checkbox_text">我已阅读并同意<a href="#" onclick="electron.shell.openExternal('https://cloud.tencent.com/document/product/301/11470')">《腾讯云隐私保护声明》</a></span></div>
+			<span class="panelistic_placeholder"></span>
+			<div class="panelistic_checkbox"><input type="checkbox" id="startup"><span class="panelistic_checkbox_text">我已阅读并同意<a href="#" onclick="electron.shell.openExternal('https://cloud.tencent.com/document/product/301/91174')">《腾讯云账号协议》</a></span></div>
+		</div>
+		<span class="panelistic_placeholder"></span>
+		<div class="panelistic_panel">
+			<div class="panelistic_panel_name">启用 CloudRetv 服务</div><br><span class="panelistic_placeholder_large"></span>
+			<div class="panelistic_panel" style="font-size:14px">若您没有 CloudRetvCode 但希望使用与 CloudRetv 相关的服务，请与开发者进行联系。</div>
+			<span class="panelistic_placeholder"></span>
+			<input type="text" placeholder="CloudRetvCode" id="retvcodefield">
+			<input type="button" value="验证 CloudRetvCode 并启用" onclick="verifyAndEnable(document.getElementById('retvcodefield').value)">
+			<input type="button" value="联系开发者" style="color:red" onclick="contactDeveloper()"><br>
+		</div>
+	</div>
+	</div>
+</body>
+
+</html>

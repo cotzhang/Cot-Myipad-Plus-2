@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="panelistic3.0-electron.css">
+	<script src="panelistic3.0-electron.js"></script>
+	<script src="func.js"></script>
+	<title>用户许可与设置</title>
+	<style type="text/css"></style>
+	<script type="text/javascript">
+	let panelistic;
+	const electron = require("electron");
+	window.onload = function() {
+		panelistic = new Panelistic();
+		panelistic.initialize();
+		// document.getElementById('').innerText=;
+		setCheckboxes()
+	}
+	electron.ipcRenderer.on('syncdata', function(event, arg) {
+		console.log(arg);
+		document.getElementById('syncfileguid').innerText = "正在解析资源 " + arg;
+	});
+	electron.ipcRenderer.on('totdata', function(event, arg) {
+		console.log(arg);
+		document.getElementById('synctotdata').innerText = arg;
+	});
+	electron.ipcRenderer.on('itemdatal', function(event, args) {
+		console.log(args);
+		document.getElementById('progressbar').max = args;
+	});
+	electron.ipcRenderer.on('itemdatai', function(event, args) {
+		console.log(args);
+		document.getElementById('progressbar').value = args;
+	});
+
+	// electron.ipcRenderer.sendToHost('firstloginwelcome');
+	const remote = require("@electron/remote");
+
+	function getJsonConfigData() {
+		electron.ipcRenderer.sendToHost('startup', document.getElementById('startup').checked)
+		return {
+			startup: document.getElementById('startup').checked,
+			tray: document.getElementById('tray').checked,
+			newBkNotify: document.getElementById('newBkNotify').checked,
+			hwCheckedNotify: document.getElementById('hwCheckedNotify').checked,
+			newBkNotify: document.getElementById('newBkNotify').checked
+		}
+	}
+
+	function getInitJsonConfigData() {
+		let initjsondata = {
+			startup: true,
+			tray: true,
+			newBkNotify: true,
+			hwCheckedNotify: true,
+			newBkNotify: true
+		}
+		try {
+			initjsondata = JSON.parse(fs.readFileSync(getuserdatapath() + '/config'));
+		} catch {}
+		return initjsondata;
+	}
+
+	function setCheckboxes() {
+		let jsd = getInitJsonConfigData()
+		document.getElementById('startup').checked = jsd.startup
+		document.getElementById('tray').checked = jsd.tray
+		document.getElementById('newBkNotify').checked = jsd.newBkNotify
+		document.getElementById('hwCheckedNotify').checked = jsd.hwCheckedNotify
+		document.getElementById('newBkNotify').checked = jsd.newBkNotify
+	}
+
+	updateSettings = function() {
+		fs.writeFileSync(getuserdatapath() + '/config', JSON.stringify(getJsonConfigData()));
+	}
+
+	function finish() {
+		updateSettings();
+		if (document.getElementById("iAgree").checked) {
+			electron.ipcRenderer.sendToHost('firstloginwelcome');
+		}else{
+			electron.ipcRenderer.sendToHost("alert","提示","您必须同意用户许可协议才能继续使用本软件。","确定")
+		}
+	}
+	</script>
+</head>
+
+<body>
+	<div id="panelistic_content_sidebar_in" class="DM_fonttitlel">
+		<div class="panelistic_panel">
+			<div class="panelistic_panel_name">用户许可</div><br><span class="panelistic_placeholder_large"></span>
+			<div class="panelistic_code" style="font-size:14px">
+				使用许可协议<br>
+				<br>
+				欢迎您选择使用平板+客户端（以下简称“本软件”）。在使用本软件之前，请仔细阅读并同意以下条款。<br>
+				<br>
+				1. 许可范围<br>
+				本软件仅供个人学习和教育相关用途使用。您可以使用本软件进行课件文件导出、课堂实录在线观看导出以及部分学校支持创建讨论组等核心功能，以及其他功能包括但不限于抓取自主学习内容、自主学习题目作答、资源库功能、抓取睿易云内容、查看睿易云学情分析、观看课堂录制、在线答疑、用户查看、我的设备、后台功能等。<br>
+				<br>
+				2. 禁止行为<br>
+				在使用本软件过程中，您不得从事任何违反国家法律法规、学校规章制度或侵犯他人合法权益的行为。禁止将本软件用于非学习相关的商业用途或任何违法行为。同时，禁止对本软件进行任何形式的破解、反编译或篡改。<br>
+				<br>
+				3. 用户义务<br>
+				您应当遵守本软件的使用规则，并承担使用本软件所产生的所有行为和后果的法律责任。您应妥善保管个人账号和登录信息，不得将其泄露给他人，否则由此产生的任何损失将由您自行承担。<br>
+				<br>
+				4. 免责声明<br>
+				本软件使用过程中出现的任何问题，包括但不限于软件运行异常、数据丢失等，均与睿易少年派桌面客户端无关。在使用本软件时，您应自行承担风险，并对使用本软件的结果负责。<br>
+				<br>
+				5. 协议变更<br>
+				对于本软件的新版本，睿易少年派桌面客户端保留根据需要随时修改本许可协议的权利。新版许可协议一经发布，即适用于该版本的本软件。<br>
+				<br>
+				6. 其他条款<br>
+				本许可协议适用中华人民共和国的法律。如果本许可协议的任何条款被认定为无效或不可执行，该条款将被视为可分割，不影响其他条款的效力。<br>
+				<br>
+				请您在使用本软件之前认真阅读、理解并同意上述条款。如果您同意并愿意遵守以上协议，请点击同意并继续使用本软件。如果您不同意上述条款，或无法遵守上述条款，请不要使用本软件。<br>
+				<br>
+				如有任何疑问或意见，请联系我们。<br>
+				<br>
+				感谢您的配合与支持！
+			</div>
+			<span class="panelistic_placeholder"></span>
+			<div class="panelistic_checkbox"><input type="checkbox" id="iAgree"><span class="panelistic_checkbox_text">我同意以上许可协议</span></div>
+		</div>
+		<span class="panelistic_placeholder"></span>
+		<div class="panelistic_panel">
+			<div class="panelistic_panel_name">程序设置</div><br><span class="panelistic_placeholder_large"></span>
+			<span style="font-size: 14px">部分更改需要重新打开程序后生效</span><span class="panelistic_placeholder"></span>
+			<div class="panelistic_checkbox"><input type="checkbox" selected onchange="updateSettings()" id="startup"><span class="panelistic_checkbox_text">开机自动启动（低内存占用）</span></div>
+			<span class="panelistic_placeholder"></span>
+			<div class="panelistic_checkbox"><input type="checkbox" selected onchange="updateSettings()" id="tray"><span class="panelistic_checkbox_text">关闭后在系统托盘运行</span></div>
+		</div>
+		<span class="panelistic_placeholder"></span>
+		<div class="panelistic_panel">
+			<div class="panelistic_panel_name">通知设置</div><br><span class="panelistic_placeholder_large"></span>
+			<div class="panelistic_checkbox"><input type="checkbox" selected onchange="updateSettings()" id="newBkNotify"><span class="panelistic_checkbox_text">新备课通知</span></div>
+			<span class="panelistic_placeholder"></span>
+			<div class="panelistic_checkbox"><input type="checkbox" selected onchange="updateSettings()" id="hwCheckedNotify"><span class="panelistic_checkbox_text">作业批改通知</span></div>
+			<!--span class="panelistic_placeholder"></span>
+			<div class="panelistic_checkbox"><input type="checkbox" selected onchange="updateSettings()"><span class="panelistic_checkbox_text">在线答疑通知</span></div-->
+		</div>
+		<span class="panelistic_placeholder"></span>
+		<div class="panelistic_panel">
+			<input type="button" value="保存并进入程序" onclick="finish()"></div>
+	</div>
+</body>
+
+</html>

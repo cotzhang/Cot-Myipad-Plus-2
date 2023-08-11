@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="panelistic3.0-electron.css">
+	<script src="panelistic3.0-electron.js"></script>
+	<script src="func.js"></script>
+	<title>PadPlus 2</title>
+</head>
+
+<body>
+	<div id="panelistic_blur"></div>
+	<div id="panelistic_window" ondragstart="return false;">
+		<div id="panelistic_content">
+			<div class="container">
+				<span style="width:var(--sidebar-width);min-width: 42px;"><span class="material-icons panelistic_panel" id="menubtn" style="vertical-align: middle;display: inline-block;cursor: pointer;">menu</span></span><span class="material-icons panelistic_panel" id="backButton" style="vertical-align: middle;display: none;cursor: pointer;">arrow_back</span>&nbsp;<span style="font-size: 16px;font-weight: bold;" id="fragment_title"></span>
+			</div>
+			<div id="panelistic_sidebar">
+				<div class="panelistic_panel panelistic_panel_opt">
+					<div style="vertical-align:middle;display: inline-block;">
+						<div class="panelistic_sidebar_title" id="panelistic_sidebar_title">未登录</div>
+						<div class="panelistic_sidebar_subtitle" id="panelistic_sidebar_subtitle">请先登录</div>
+						<div id="cloudretv" class="panelistic_sidebar_selection panelistic_panel" onclick="webview.loadURL('file:///'+__dirname+'/fragments/cloudretv.html')" style="margin: 2px;padding: 4px;width: 145px;background: #ff4a4a73;"><span class="material-icons" style="vertical-align: middle;display: inline-block;">data_thresholding</span><span style="display: inline-block;vertical-align: middle;">&nbsp;CloudRetv</span></div>
+					</div>
+				</div>
+				<span id="allmodulebtn" style="display:none">
+					<div id="sel_selflearn" class="panelistic_sidebar_selection panelistic_panel panelistic_sidebar_selection_selected" onclick="webview.loadURL('file:///'+__dirname+'/fragments/selflearn.html')"><span class="material-icons" style="vertical-align: middle;display: inline-block;">dashboard</span><span style="display: inline-block;vertical-align: middle;">&nbsp;自主学习</span></div>
+					<div id="sel_userlist" class="panelistic_sidebar_selection panelistic_panel" onclick="webview.loadURL('file:///'+__dirname+'/fragments/userlist.html')"><span class="material-icons" style="vertical-align: middle;display: inline-block;">contact_emergency</span><span style="display: inline-block;vertical-align: middle;">&nbsp;我的班级</span></div>
+					<div id="sel_schoolconsole" class="panelistic_sidebar_selection panelistic_panel" onclick="simpleRequestC2('schoolconsole')"><span class="material-icons" style="vertical-align: middle;display: inline-block;">streetview</span><span style="display: inline-block;vertical-align: middle;">&nbsp;学校成员</span></div>
+					<div id="sel_padlocation" class="panelistic_sidebar_selection panelistic_panel" onclick="simpleRequestC2('padlocation')"><span class="material-icons" style="vertical-align: middle;display: inline-block;">edit_location_alt</span><span style="display: inline-block;vertical-align: middle;">&nbsp;平板定位</span></div>
+					<!-- <div id="sel_myicloud" class="panelistic_sidebar_selection panelistic_panel" onclick="openRyYun('/web/practice/index.html')"><span class="material-icons" style="vertical-align: middle;display: inline-block;">cloud</span><span style="display: inline-block;vertical-align: middle;">&nbsp;睿易云</span></div> -->
+					<div id="sel_chat" class="panelistic_sidebar_selection panelistic_panel" onclick="openChatWin()"><span class="material-icons" style="vertical-align: middle;display: inline-block;">question_answer</span><span style="display: inline-block;vertical-align: middle;">&nbsp;在线答疑</span></div>
+					<div id="sel_studyanalyse" class="panelistic_sidebar_selection panelistic_panel" onclick="openRyYun('/web/analyse/index.html#/AnalysisLists?backUrl=%2FNewHome',true)"><span class="material-icons" style="vertical-align: middle;display: inline-block;">assessment</span><span style="display: inline-block;vertical-align: middle;">&nbsp;学情分析</span></div>
+					<!-- <div id="sel_selflearn" class="panelistic_sidebar_selection panelistic_panel" onclick="openRyYun('/web/practice/index.html#/InterResetStudy')"><span class="material-icons" style="vertical-align: middle;display: inline-block;">fact_check</span><span style="display: inline-block;vertical-align: middle;">&nbsp;在线题库</span></div> -->
+					<div id="sel_libres" class="panelistic_sidebar_selection panelistic_panel" onclick="webview.loadURL('file:///'+__dirname+'/library.html')"><span class="material-icons" style="vertical-align: middle;display: inline-block;">folder_zip</span><span style="display: inline-block;vertical-align: middle;">&nbsp;资源库</span></div>
+					<div id="sel_questionbook" class="panelistic_sidebar_selection panelistic_panel" onclick="simpleRequestC2('questionbook')"><span class="material-icons" style="vertical-align: middle;display: inline-block;">collections_bookmark</span><span style="display: inline-block;vertical-align: middle;">&nbsp;试题本</span></div>
+					<div id="sel_classrec" class="panelistic_sidebar_selection panelistic_panel" onclick="webview.loadURL('file:///'+__dirname+'/classrecord.html')"><span class="material-icons" style="vertical-align: middle;display: inline-block;">movie</span><span style="display: inline-block;vertical-align: middle;">&nbsp;课堂实录</span></div>
+					<div id="sel_cageutilssel" class="panelistic_sidebar_selection panelistic_panel" onclick="webview.loadURL('file:///'+__dirname+'/cageutils.html')"><span class="material-icons" style="vertical-align: middle;display: inline-block;">screen_share</span><span style="display: inline-block;vertical-align: middle;">&nbsp;我的设备</span></div>
+					<!-- <div id="select2" class="panelistic_sidebar_selection panelistic_panel" onclick="webview.loadURL('file:///'+__dirname+'/mypad.html')"><span class="material-icons" style="vertical-align: middle;display: inline-block;">screen_share</span><span style="display: inline-block;vertical-align: middle;">&nbsp;我的设备</span></div> -->
+					<!--div id="sel_selflearn" class="panelistic_sidebar_selection panelistic_panel" onclick="if(!fs.existsSync(__dirname+'/downloads')){fs.mkdirSync(__dirname+'/downloads')}electron.shell.openPath(__dirname+'/downloads')">下载的文件</div-->
+					<div id="sel_toolbox" class="panelistic_sidebar_selection panelistic_panel" onclick="webview.loadURL('file:///'+__dirname+'/toolbox/toolbox.html')"><span class="material-icons" style="vertical-align: middle;display: inline-block;">home_repair_service</span><span style="display: inline-block;vertical-align: middle;">&nbsp;工具箱</span></div>
+					<div id="sel_accountsettings" class="panelistic_sidebar_selection panelistic_panel" onclick="webview.loadURL('file:///'+__dirname+'/fragments/account.html')"><span class="material-icons" style="vertical-align: middle;display: inline-block;">settings_applications</span><span style="display: inline-block;vertical-align: middle;">&nbsp;账号与设置</span></div>
+					<div id="sel_exit" class="panelistic_sidebar_selection panelistic_panel" onclick="electron.ipcRenderer.send('exit')"><span class="material-icons" style="vertical-align: middle;display: inline-block;">disabled_by_default</span><span style="display: inline-block;vertical-align: middle;">&nbsp;退出</span></div>
+				</span>
+			</div>
+			<div id="panelistic_content_sidebar">
+				<style>
+				.container {
+					display: flex;
+					align-items: center;
+					justify-content: normal;
+					height: 32px;
+					padding: 8px;
+				}
+				</style>
+				<webview id="webview" src="fragments/selflearn.html" nodeintegration="true" disablewebsecurity webpreferences="contextIsolation=no" />
+				</webview>
+			</div>
+		</div>
+	</div>
+	<style type="text/css">
+	/* fallback */
+	@font-face {
+		font-family: 'Material Icons';
+		font-style: normal;
+		font-weight: 400;
+		src: url(icons.woff2) format('woff2');
+	}
+
+	body {
+		background-color: #aabfcc;
+	}
+
+	@media (prefers-color-scheme: dark) {
+		body {
+			background-color: #45315ccc;
+		}
+	}
+
+	.material-icons {
+		font-family: 'Material Icons';
+		font-weight: normal;
+		font-style: normal;
+		font-size: 18px;
+		line-height: 1;
+		letter-spacing: normal;
+		text-transform: none;
+		display: inline-block;
+		white-space: nowrap;
+		word-wrap: normal;
+		direction: ltr;
+		-webkit-font-feature-settings: 'liga';
+		-webkit-font-smoothing: antialiased;
+	}
+	</style>
+</body>
+<script src="electron-mica.js"></script>
+<script>
+	let panelistic = new Panelistic();
+	panelistic.initialize()
+</script>
+<script src="./procedure.js"></script>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="../panelistic3.0-electron.css">
+	<script src="../panelistic3.0-electron.js"></script>
+	<title>离线副本创建</title>
+	<script src="../func.js"></script>
+	<style type="text/css"></style>
+	<script type="text/javascript">
+	let panelistic;
+	const electron = require("electron");
+	window.onload = function() {
+		panelistic = new Panelistic();
+		panelistic.initialize();
+
+		if (fs.existsSync(getuserdatapath() + "/cageid")) {
+			document.getElementById("cageidtxt").value = fs.readFileSync(getuserdatapath() + "/cageid");
+			connect()
+		}
+	}
+	const { dialog } = require('electron');
+
+	electron.ipcRenderer.on('folderPath', (event, folderPath) => {
+		console.log(folderPath);
+		let fulldata = JSON.parse(fs.readFileSync(getuserdatapath() + '/resources')).concat(JSON.parse(fs.readFileSync(getuserdatapath() + '/ryyresources'))).sort(sortAllArrs);
+		for (var i = 0; i < fulldata.length; i++) {
+			electron.ipcRenderer.sendToHost("salert", "正在解析资源  " + i + "/" + fulldata.length);
+			parsePrepareClass(fulldata[i], undefined, folderPath)
+			electron.ipcRenderer.sendToHost("dismisssalert");
+		}
+		electron.ipcRenderer.sendToHost("alert", "提示","资源全部解析完成，请等待后台下载进程完成。请勿立即退出主程序。");
+	})
+
+	function startDownload() {
+		electron.ipcRenderer.sendToHost("selPath")
+	}
+
+	function getResByGUIDSync(guid) {
+		let reqstrs = `<v:Envelope xmlns:v="http://schemas.xmlsoap.org/soap/envelope/" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/">
+    <v:Header/>
+    <v:Body>
+        <GetResourceByGUID xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1">
+            <lpszResourceGUID i:type="d:string">${guid}</lpszResourceGUID>
+        </GetResourceByGUID>
+    </v:Body></v:Envelope>`;
+		let gotdata = requestSync("http://webservice.myi.cn/wmstudyservice/wsdl/GetResourceByGUID", reqstrs);
+		if ((gotdata.responseText).indexOf("<faultstring>Error -4063</faultstring") != -1) {
+			console.log("Wrong Sessionid");
+			fs.writeFileSync(getuserdatapath() + '/relogin', "error");
+			electron.ipcRenderer.sendToHost('reload')
+		} else {
+			return gotdata;
+		}
+	}
+
+	function requestSync(pos, body) {
+		//console.log("Requesting:", body)
+		return $.ajax({
+			xhrFields: {
+				withCredentials: true
+			},
+			url: "https://" + getGlobalServerAddr() + "/wmexam/wmstudyservice.WSDL",
+			data: body,
+			dataType: "text",
+			type: "post",
+			timeout: 400,
+			async: false,
+			beforeSend: function(request) {
+				let ck = `sessionid=${getGlobalSessionId()};userguid=ffffffffffffffffffffffffffffffff`;
+				request.setRequestHeader("Set-Cookie", ck);
+				request.setRequestHeader("SOAPAction", pos);
+			}
+		})
+	}
+
+	function parsePrepareClass(prepareClass, element, folderPath) {
+		if (!prepareClass.resource) { return; }
+		for (let i = 0; i < prepareClass.resource.length; i++) {
+			const thisres = prepareClass.resource[i];
+			const guid = thisres.guid
+			const resourcetype = thisres.resourcetype
+			const title = thisres.title
+			const content = thisres.textContent;
+			//starting getting object by guid
+			thisallreturnval = getResByGUIDSync(guid).responseText;
+			let maxretries = 60;
+			if ((thisallreturnval + "").indexOf("-4063") != -1) {
+				fs.writeFileSync(getuserdatapath() + '/relogin', "error");
+				console.log(thisallreturnval)
+				window.location.reload();
+			} else {
+				while ((thisallreturnval.indexOf("<center><h1>502 Bad Gateway</h1></center>") != -1) && maxretries > 0) {
+					thisallreturnval = getResByGUIDSync(guid).responseText;
+					maxretries--;
+				}
+				if (!maxretries > 0) {
+					console.error('FAILED after 60 times!')
+				} else if (maxretries != 60) {}
+				let psretval = thisallreturnval.substring(thisallreturnval.indexOf('<AS:szXMLContent>') + 17, thisallreturnval.indexOf("</AS:szXMLContent>"));
+				var temp = document.createElement("div");
+				temp.innerHTML = psretval;
+				psretval = temp.innerText || temp.textContent;
+				temp = null;
+				getdoms = parseDom(psretval)[0];
+				globalTestVar = getdoms;
+				try {
+					const fileUri = getdoms.querySelector("div > wmstudy > resource > content").attributes.fileuri.textContent
+					const fileExtension = fileUri.substring(fileUri.lastIndexOf("."));
+					console.log(getdoms.querySelector("div > wmstudy > resource > content").attributes.fileuri.textContent)
+					console.log(folderPath + "/" + getdoms.querySelector("div > wmstudy > resource").attributes.title.textContent + fileExtension)
+					electron.ipcRenderer.sendToHost('downloadFileTo', getdoms.querySelector("div > wmstudy > resource > content").attributes.fileuri.textContent, folderPath + "/" + getdoms.querySelector("div > wmstudy > resource").attributes.title.textContent + fileExtension)
+				} catch (err) { console.log(err) }
+			}
+		}
+		// return returnvalue;
+	}
+	</script>
+</head>
+
+<body>
+	<div id="panelistic_content_sidebar_in" class="DM_fonttitlel">
+		<div class="panelistic_panel">
+			<input type="button" value="开始下载" onclick="startDownload()">
+			<span class="panelistic_placeholder"></span>
+			<span style="font-size: 14px;">下载可能需要数小时<br>请耐心等待</span>
+		</div>
+	</div>
+</body>
+
+</html>

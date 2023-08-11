@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="panelistic3.0-electron.css">
+	<script src="panelistic3.0-electron.js"></script>
+	<script src="func.js"></script>
+	<title>资源库</title>
+	<link href="maticons.css" rel="stylesheet">
+	<style type="text/css"></style>
+	<script type="text/javascript">
+	let panelistic;
+	const electron = require("electron");
+	const path = require('path')
+	const { ipcRenderer } = electron
+
+	var studentPL = ""
+
+	window.onload = function() {
+		panelistic = new Panelistic();
+		panelistic.initialize();
+		ipcRenderer.sendToHost('salert', '请稍等')
+		renderResLib();
+	}
+
+	let allRootDir = []
+
+	let allMyDir = []
+
+	let allSOF = []
+
+	let historyArr = []
+
+	let historyNodeArr = []
+
+	function getAllRootDir(callback) {
+		let reqstr = `<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><GetPrivateData2 xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><lpszKey i:type="d:string">StudentPad</lpszKey></GetPrivateData2></v:Body></v:Envelope>`
+		autoRetryRequestWSDL("http://webservice.myi.cn/wmstudyservice/wsdl/GetPrivateData2", reqstr, (databack) => {
+			xml2js.parseString(databack, (err, result) => {
+				xml2js.parseString(result["SOAP-ENV:Envelope"]["SOAP-ENV:Body"][0]["AS:GetPrivateData2Response"][0]["AS:szData"][0], (err, res) => {
+					allRootDir = (res.wmStudy.PadDirectory);
+					callback()
+				})
+			});
+		}, 500, 500)
+	}
+
+	function getStudentPadLocation(padbase, cb) {
+		let reqstr = `<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><SearchAndCreateKPFromCurrent xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><lpszParentKPGUID i:type="d:string">${padbase}</lpszParentKPGUID><lpszKPName i:type="d:string">${getGlobalUsrname()}:myipad_${globalAccountFile.account}</lpszKPName></SearchAndCreateKPFromCurrent></v:Body></v:Envelope>`
+		autoRetryRequestWSDL("http://webservice.myi.cn/wmstudyservice/wsdl/SearchAndCreateKPFromCurrent", reqstr, (databack) => {
+			xml2js.parseString(databack, (err, result) => {
+				cb(result["SOAP-ENV:Envelope"]["SOAP-ENV:Body"][0]["AS:SearchAndCreateKPFromCurrentResponse"][0]["AS:szKPGUID"][0])
+			});
+		}, 500, 500)
+	}
+
+	function getStudentOwnFolder(cbbase, cbs) {
+		let reqstr = `<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><GetOneLevelCatalogs xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><lpszParentKPGUID i:type="d:string">${cbbase}</lpszParentKPGUID></GetOneLevelCatalogs></v:Body></v:Envelope>`
+		autoRetryRequestWSDL("http://webservice.myi.cn/wmstudyservice/wsdl/SearchAndCreateKPFromCurrent", reqstr, (databack) => {
+			xml2js.parseString(databack, (err, result) => {
+				console.log(result["SOAP-ENV:Envelope"]["SOAP-ENV:Body"][0]["AS:GetOneLevelCatalogsResponse"][0]["AS:szXMLResult"][0])
+				xml2js.parseString(result["SOAP-ENV:Envelope"]["SOAP-ENV:Body"][0]["AS:GetOneLevelCatalogsResponse"][0]["AS:szXMLResult"][0], (err, res) => {
+					allSOF = (res.wmStudy['Node']);
+					cbs()
+				})
+			});
+		}, 500, 500)
+	}
+
+	function getFolderByKPGUID(cbbase, cbs) {
+		let reqstr = `<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><GetOneLevelCatalogs xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><lpszParentKPGUID i:type="d:string">${cbbase}</lpszParentKPGUID></GetOneLevelCatalogs></v:Body></v:Envelope>`
+		autoRetryRequestWSDL("http://webservice.myi.cn/wmstudyservice/wsdl/SearchAndCreateKPFromCurrent", reqstr, (databack) => {
+			xml2js.parseString(databack, (err, result) => {
+				console.log(result["SOAP-ENV:Envelope"]["SOAP-ENV:Body"][0]["AS:GetOneLevelCatalogsResponse"][0]["AS:szXMLResult"][0])
+				xml2js.parseString(result["SOAP-ENV:Envelope"]["SOAP-ENV:Body"][0]["AS:GetOneLevelCatalogsResponse"][0]["AS:szXMLResult"][0], (err, res) => {
+					console.log(res.wmStudy['Node'])
+					cbs(res.wmStudy['Node'])
+				})
+			});
+		}, 500, 500)
+	}
+
+	function getFolderCtnByKPGUID(cbbase, cbs) {
+		let reqstr = `<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><GetKPResources3 xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><lpszKPGUID i:type="d:string">${cbbase}</lpszKPGUID><nResourceType i:type="d:int">-1</nResourceType></GetKPResources3></v:Body></v:Envelope>`
+		autoRetryRequestWSDL("http://webservice.myi.cn/wmstudyservice/wsdl/GetKPResources3", reqstr, (databack) => {
+			xml2js.parseString(databack, (err, result) => {
+				let adb = result["SOAP-ENV:Envelope"]["SOAP-ENV:Body"][0]["AS:GetKPResources3Response"][0];
+				console.log(adb)
+				try {
+					for (var z = 0; z < adb['AS:arrResourceTitles'][0].anyType.length; z++) {
+						renderMoreFle([adb['AS:arrResourceTitles'][0].anyType[z]["_"], adb['AS:arrResourceGUIDs'][0].anyType[z]["_"], adb['AS:arrResourceDate'][0].anyType[z]["_"], adb['AS:arrResourceGUIDs'][0].anyType[z]["_"]]);
+						if (cbs) { cbs() }
+					}
+				} catch {}
+				ipcRenderer.sendToHost('dismisssalert');
+			});
+		}, 500, 500)
+	}
+
+	function openF(isFolder, ftt, fng, saveas) {
+		ipcRenderer.sendToHost('salert', '请稍等')
+		if (isFolder) {
+			historyArr.push(ftt)
+			historyNodeArr.push(fng)
+			refreshAddrBarDisp()
+			getFolderByKPGUID(fng, (res) => {
+				renderClear()
+				try { renderMore(res) } catch {}
+				try { getFolderCtnByKPGUID(fng) } catch {}
+			})
+		} else {
+			getResourceByGUID(fng, (cbv) => {
+				ipcRenderer.sendToHost('dismisssalert');
+				if (saveas) {
+					try {
+						electron.ipcRenderer.sendToHost('loaddata', cbv.RESOURCE.CONTENT["@attributes"].fileuri, 'saveas')
+					} catch {}
+					try {
+						//cbv.RESOURCE.SUMMERY.CONTENT["@attributes"].fileuri
+						electron.ipcRenderer.sendToHost('loaddata', cbv.RESOURCE.SUMMERY.CONTENT["@attributes"].fileuri, 'saveas')
+					} catch {}
+				} else {
+					try {
+						electron.ipcRenderer.sendToHost('loaddata', cbv.RESOURCE.CONTENT["@attributes"].fileuri, 'open', '', true)
+					} catch {}
+					try {
+						//cbv.RESOURCE.SUMMERY.CONTENT["@attributes"].fileuri
+						electron.ipcRenderer.sendToHost('loaddata', cbv.RESOURCE.SUMMERY.CONTENT["@attributes"].fileuri, 'open', '', true)
+					} catch {}
+				}
+			})
+		}
+	}
+
+	function downF(isFolder, ftt, fng) {
+		if (isFolder) {} else {
+			getResourceByGUID(fng, (cbv) => {
+				try {
+					electron.ipcRenderer.sendToHost('downF', cbv.RESOURCE.CONTENT["@attributes"].fileuri, 'open')
+				} catch {}
+				try {
+					//cbv.RESOURCE.SUMMERY.CONTENT["@attributes"].fileuri
+					electron.ipcRenderer.sendToHost('downF', cbv.RESOURCE.SUMMERY.CONTENT["@attributes"].fileuri, 'open')
+				} catch {}
+			})
+		}
+	}
+
+	function refreshAddrBarDisp() {
+		document.getElementById('addrbar').value = ['学生平板'].concat(historyArr).join(' > ')
+	}
+
+	function getResourceByGUID(resourceguid, callback) {
+		let retv = {}
+		let reqstrs = `<v:Envelope xmlns:v="http://schemas.xmlsoap.org/soap/envelope/" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/">
+	<v:Header/>
+	<v:Body>
+		<GetResourceByGUID xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1">
+			<lpszResourceGUID i:type="d:string">${resourceguid}</lpszResourceGUID>
+		</GetResourceByGUID>
+	</v:Body></v:Envelope>`;
+		autoRetryRequestWSDL("http://webservice.myi.cn/wmstudyservice/wsdl/GetResourceByGUID", reqstrs, (allretval) => {
+			try {
+				// console.log(reqstrs)
+				let psretval = allretval.substring(allretval.indexOf('<AS:szXMLContent>') + 17, allretval.indexOf("</AS:szXMLContent>"));
+				var temp = document.createElement("div");
+				temp.innerHTML = psretval;
+				psretval = temp.innerText || temp.textContent;
+				temp = null;
+				allrecs = xmlToJson(parseDom(psretval)[0]);
+				globalTestVar = allrecs;
+				callback(allrecs)
+			} catch (err) {
+				console.warn(err, allretval)
+				electron.ipcRenderer.sendToHost('alert', '出错', '资源信息获取失败', '确定')
+				// debugger;
+				retv.error = 1;
+				retv.scheduledate = "0";
+				retv.date = "0";
+			}
+		}, 500, 500)
+	}
+
+	function searchIdInRootdir(classguid) {
+		for (var i = 0; i < allRootDir.length; i++) {
+			try {
+				if ((allRootDir[i]["$"].name.split(':')[1]).indexOf(classguid + '_Root') != -1) {
+					allMyDir.push(allRootDir[i])
+				}
+			} catch { console.log('err') }
+		}
+	}
+
+	function renderClear() {
+		if (historyNodeArr.length == 0) {
+			document.getElementById('note_add').disabled = 'disabled'
+		} else {
+			document.getElementById('note_add').disabled = ''
+		}
+		document.getElementById('spancst').innerHTML = ""
+	}
+
+	function renderMore(iptArr) {
+		let addStr = ''
+		try {
+			for (var i = 0; i < iptArr.length; i++) {
+				addStr += model_item(true, iptArr[i]["$"].name.split(":")[0], iptArr[i]["$"].guid ? iptArr[i]["$"].guid : iptArr[i]["$"].kpGUID, '文件夹', iptArr[i]["$"].guid ? iptArr[i]["$"].guid : iptArr[i]["$"].kpGUID)
+			}
+			document.getElementById('spancst').innerHTML += addStr
+		} catch {}
+	}
+
+	function renderMoreFle(iptArr) {
+		let addStr = ''
+		addStr += model_itemFile(false, iptArr[0], iptArr[1], iptArr[2], iptArr[3])
+		document.getElementById('spancst').innerHTML += addStr
+	}
+
+	function goBack(callback) {
+		historyArr.pop()
+		historyNodeArr.pop()
+		ipcRenderer.sendToHost('salert', '请稍等')
+		if (historyNodeArr.length) {
+			getFolderByKPGUID(historyNodeArr[historyNodeArr.length - 1], (res) => {
+				renderClear()
+				try { renderMore(res) } catch {}
+				try {
+					getFolderCtnByKPGUID(historyNodeArr[historyNodeArr.length - 1]);
+					callback();
+				} catch {}
+			})
+		} else {
+			renderClear()
+			renderMore(allMyDir)
+			getStudentPadLocation(allRootDir[0]['$']['kpGUID'], (num) => {
+				getStudentOwnFolder(num, () => {
+					renderMore(allSOF)
+					ipcRenderer.sendToHost('dismisssalert');
+				})
+			})
+		}
+		refreshAddrBarDisp()
+	}
+
+	function getFullPathStr() {
+		return ['学生平板', getGlobalUsrname() + ':myipad_' + globalAccountFile.account].concat(historyArr).join('\\');
+	}
+
+	function uploadFileAndCopy() {
+		ipcRenderer.sendToHost('upload')
+	}
+
+	const uploadFile = function(filePath, callbacks, cnt, allcnt) {
+		let pkgid = getRandomGUID()
+		const curfile = fs.readFileSync(filePath);
+		const chunkSize = 524288;
+		const fileSize = curfile.length;
+		let offset = 0;
+		let append = 0;
+		const fileName = 'FILE_PADPLUS_' + pkgid;
+		let uploadedChunkCount = 0;
+		while (offset < fileSize) {
+			const currentChunkSize = Math.min(chunkSize, fileSize - offset);
+			let offsets = offset;
+			autoRetryRequestOctet(`https://${getGlobalServerAddr()}/PutFileChunk?filename=${fileName+path.extname(filePath)}&offset=${offsets}&append=${append}`, curfile.slice(offset, offset + currentChunkSize), [{ key: 'Content-Type', value: 'application/octet-stream' }], function(response) {
+				console.log('Uploaded chunk: ' + offsets);
+				ipcRenderer.sendToHost('dismisssalert')
+				ipcRenderer.sendToHost('salert', '正在上传 ' + cnt + '/' + allcnt + ' ' + (uploadedChunkCount / Math.ceil(fileSize / chunkSize) * 100).toFixed(2) + "%")
+				uploadedChunkCount++;
+				if (uploadedChunkCount === Math.ceil(fileSize / chunkSize)) {
+
+					callbacks(fileName);
+				}
+			}, 500, 20000)
+			offset += currentChunkSize;
+			append = 1;
+		}
+	}
+
+	function setObjAccessRight(objResguid, callback) {
+		let reqstr = `<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><SetObjectAccessRights xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><szOwnerGUID i:type="d:string">${getGlobalUserguid()}</szOwnerGUID><lpszSearchSQL i:type="d:string"> where guid='${objResguid}'</lpszSearchSQL><szGroupGUID i:type="d:string">${getGlobalUserguid()}</szGroupGUID><nRights i:type="d:int">127</nRights><nObjectType i:type="d:int">4</nObjectType></SetObjectAccessRights></v:Body></v:Envelope>`
+		autoRetryRequestWSDL('http://webservice.myi.cn/wmstudyservice/wsdl/SetObjectAccessRights', reqstr, (result) => {
+			console.log(result)
+			callback()
+			if (result.indexOf("<AS:SetObjectAccessRightsResult>0</AS:SetObjectAccessRightsResult>") != -1) {} else {
+				ipcRenderer.sendToHost('alert', '提示', '上传出错', '确定')
+			}
+		}, 500, 1000)
+	}
+
+	function delObjectFile(objResguid, callback) {
+		let reqstr = `<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><DeleteResource xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><lpszQuestionGUID i:type="d:string">${objResguid}</lpszQuestionGUID><lpszGUID i:type="d:string">${objResguid}</lpszGUID></DeleteResource></v:Body></v:Envelope>`
+		autoRetryRequestWSDL('http://webservice.myi.cn/wmstudyservice/wsdl/SetObjectAccessRights', reqstr, (result) => {
+			console.log(result)
+			if (result.indexOf("<AS:DeleteResourceResult>0</AS:DeleteResourceResult>") != -1) {
+				callback()
+			} else {
+				ipcRenderer.sendToHost('alert', '提示', '删除失败', '确定')
+			}
+		}, 500, 1000)
+	}
+
+	function delObjectFolder(objResguid, callback) {
+		let reqstr = `<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><DeleteKnowledgePoint xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><lpszKPGUID i:type="d:string">${objResguid}</lpszKPGUID></DeleteKnowledgePoint></v:Body></v:Envelope>`
+		autoRetryRequestWSDL('http://webservice.myi.cn/wmstudyservice/wsdl/SetObjectAccessRights', reqstr, (result) => {
+			console.log(result)
+			callback()
+		}, 500, 1000)
+	}
+
+	function renameObjectFolder(newName, objResguid, callback) {
+		let reqstr = `<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><RenameKnowledegePoint xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><lpszKPGUID i:type="d:string">${objResguid}</lpszKPGUID><lpszNewName i:type="d:string">${newName}</lpszNewName></RenameKnowledegePoint></v:Body></v:Envelope>`
+
+		console.log(reqstr)
+		autoRetryRequestWSDL('http://webservice.myi.cn/wmstudyservice/wsdl/RenameKnowledegePoint', reqstr, (result) => {
+			console.log(result)
+			callback()
+		}, 500, 1000)
+	}
+
+	function setObjAccessRight0(objResguid, callback) {
+		let reqstr = `<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><SetObjectAccessRights xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><szOwnerGUID i:type="d:string">${getGlobalUserguid()}</szOwnerGUID><lpszSearchSQL i:type="d:string"> where guid='${objResguid}'</lpszSearchSQL><szGroupGUID i:type="d:string">${getGlobalUserguid()}</szGroupGUID><nRights i:type="d:int">127</nRights><nObjectType i:type="d:int">0</nObjectType></SetObjectAccessRights></v:Body></v:Envelope>`
+		autoRetryRequestWSDL('http://webservice.myi.cn/wmstudyservice/wsdl/SetObjectAccessRights', reqstr, (result) => {
+			console.log(result)
+			callback()
+			if (result.indexOf("<AS:SetObjectAccessRightsResult>0</AS:SetObjectAccessRightsResult>") != -1) {} else {
+				ipcRenderer.sendToHost('alert', '提示', '上传出错', '确定')
+			}
+		}, 500, 1000)
+	}
+
+	electron.ipcRenderer.on('filepath', (event, args) => {
+		if (args[0] == "") { return; }
+		if (args.length > 1) { simpleRequestC("openfin", () => { uploadFilesSync(args) }, "批量上传文件") } else { uploadFilesSync(args) }
+
+	})
+
+	electron.ipcRenderer.on('openfin', (event, args) => {
+		electron.shell.openExternal()
+	})
+
+	function uploadFilesSync(args, index = 0, callback) {
+		if (index === args.length) {
+			ipcRenderer.sendToHost('dismisssalert')
+			refresh()
+			callback()
+		} else {
+			uploadFile(args[index], (pkgid) => {
+				uploadFileRes(pkgid, args[index], () => {
+					setTimeout(() => {
+						uploadFilesSync(args, index + 1, callback);
+					}, 400)
+				});
+			}, index, args.length);
+		}
+	}
+
+	electron.ipcRenderer.on('folderName', (event, args) => {
+		newFolder(args ? args : '新建文件夹', () => { refresh() })
+	})
+
+	electron.ipcRenderer.on('delObjectFile', (event, args) => {
+		delObjectFile(args, () => { refresh() })
+	})
+
+	electron.ipcRenderer.on('delObjectFolder', (event, args) => {
+		delObjectFolder(args, () => { refresh() })
+	})
+
+	electron.ipcRenderer.on('renameObjectFolder', (event, args) => {
+		renameObjectFolder(args[0], args[1], () => { refresh() })
+	})
+
+	electron.ipcRenderer.on('openF', (event, args) => {
+		console.log(args[0], args[1], args[2])
+		openF(args[0], args[1], args[2], args[3])
+	})
+
+	electron.ipcRenderer.on('uploadall', (event, args) => {
+		console.log(args[0], args[1], args[2])
+		openF(args[0], args[1], args[2])
+	})
+
+	function goHome() {
+		ipcRenderer.sendToHost('salert', '请稍等')
+		historyNodeArr = []
+		historyArr = []
+		renderClear()
+		renderMore(allMyDir)
+		getStudentPadLocation(allRootDir[0]['$']['kpGUID'], (num) => {
+			getStudentOwnFolder(num, () => {
+				renderMore(allSOF)
+				ipcRenderer.sendToHost('dismisssalert');
+			})
+		})
+		refreshAddrBarDisp()
+	}
+
+	function newFolder(folderName, callback) {
+		let reqstr = `<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><AddKnowledgePoint xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><lpszParentKPGUID i:type="d:string">${(historyNodeArr.length==0)?(studentPL):(historyNodeArr[historyNodeArr.length-1])}</lpszParentKPGUID><nKPType i:type="d:int">3</nKPType><lpszKPName i:type="d:string">${folderName}</lpszKPName><nDisplayIndex i:type="d:int">0</nDisplayIndex><nSubject i:type="d:int">-1</nSubject><nGrade i:type="d:int">-1</nGrade><nBookVersion i:type="d:int">-1</nBookVersion></AddKnowledgePoint></v:Body></v:Envelope>`
+		autoRetryRequestWSDL('http://webservice.myi.cn/wmstudyservice/wsdl/AddKnowledgePoint', reqstr, (result) => {
+			console.log(reqstr)
+			if (result.indexOf("<AS:AddKnowledgePointResult>0</AS:AddKnowledgePointResult>") != -1) {
+				let newPkguid = result.match(/szNewKPGUID>(\S*)<\/AS:szNewKPGUID/)[1];
+				setObjAccessRight0(newPkguid, () => {
+					callback(newPkguid)
+				})
+			} else {
+				ipcRenderer.sendToHost('alert', '提示', '创建失败', '确定')
+			}
+		}, 500, 1000)
+	}
+
+	function refresh() {
+		console.log('refreshing')
+		ipcRenderer.sendToHost('salert', '刷新中')
+		if (historyNodeArr.length) {
+			getFolderByKPGUID(historyNodeArr[historyNodeArr.length - 1], (res) => {
+				renderClear()
+				try { renderMore(res) } catch {}
+				try { getFolderCtnByKPGUID(historyNodeArr[historyNodeArr.length - 1]) } catch {}
+			})
+		} else {
+			renderClear()
+			renderMore(allMyDir)
+			getStudentPadLocation(allRootDir[0]['$']['kpGUID'], (num) => {
+				getStudentOwnFolder(num, () => {
+					renderMore(allSOF)
+					ipcRenderer.sendToHost('dismisssalert')
+				})
+			})
+		}
+		refreshAddrBarDisp()
+	}
+
+	function uploadFolder() {
+		simpleRequestC("https://server.lexuewang.cn:8003/",() => {
+			ipcRenderer.sendToHost('selPath')
+		},"上传文件夹")
+	}
+
+	electron.ipcRenderer.on('folderPath', (event, args) => {
+		var folderRoot = args
+		uploadFolderRecursive(args)
+	})
+
+	var folderRoot = ""
+
+	var folderList = [];
+
+	function uploadFolderRecursive(fpath, callback) {
+		uploadFolderNoSubFolder(fpath, (allfilesinfolder, subfolders) => {
+			uploadFilesSync(allfilesinfolder, 0, () => {
+				console.log(subfolders);
+				// debugger;
+				var i = 0;
+
+				function uploadNextFolder() {
+					if (i < subfolders.length) {
+						uploadFolderRecursive(subfolders[i], () => {
+							ipcRenderer.sendToHost('dismisssalert', '正在读取目录');
+							i++;
+							uploadNextFolder();
+						});
+					} else {
+						ipcRenderer.sendToHost('salert', '正在读取目录')
+						setTimeout(() => {
+							goBack(() => {
+								log("Callback uploadFolderRecursive, go back.", 0)
+								callback();
+							});
+						}, 400)
+					}
+				}
+
+				uploadNextFolder();
+			});
+		});
+	}
+
+
+	function uploadFolderNoSubFolder(fpath, callback) {
+		let subfolders = []
+		let allfilesinfolder = []
+		ipcRenderer.sendToHost('salert', '正在创建文件夹')
+		newFolder(path.basename(fpath), (kpGUID) => {
+			ipcRenderer.sendToHost('dismisssalert')
+			historyArr.push(path.basename(fpath))
+			historyNodeArr.push(kpGUID);
+			fs.readdirSync(fpath).forEach(function(file) {
+				var curPath = fpath + "/" + file;
+				if (fs.statSync(curPath).isDirectory()) { // recurse
+					// uploadFolderRecursive(curPath);
+					subfolders.push(curPath)
+				} else { // delete file
+					allfilesinfolder.push(curPath)
+				}
+			});
+			callback(allfilesinfolder, subfolders)
+		})
+	};
+
+	function createNF() {
+		ipcRenderer.sendToHost('input', '新建文件夹', '请输入文件夹名称', '新建文件夹', '确定')
+	}
+
+	function model_item(isFolder, filetitle, folderNodeGuid, fileDesc, resguid) {
+		return `
+		<div class="panelistic_panel" style="padding-bottom: 3px;" ondblclick="openF(${isFolder},'${filetitle}','${folderNodeGuid}')" oncontextmenu="moreFolder('${filetitle}','${folderNodeGuid}')">
+			<img src="${(!isFolder)?(`https://${getGlobalServerAddr()}/getresourcethumbnail?guid=${resguid}`):'src/img/folder.png'}" ondragstart="return false" style="display:inline;" height="40px" width="40px">
+			<div style="vertical-align: top;display: inline-block;margin-left: 5px;width: calc(100% - 202px);height: 40px;">
+				<span style="vertical-align: top;font-size: 18px;font-weight: bold;-webkit-line-clamp: 1;display:-webkit-box;-webkit-box-orient: vertical;overflow: hidden;" class="DM_fonttitlel">${filetitle}</span>
+				<!--max-length-35chars-->
+				<span style="font-size: 12px;color: #555;display: block;height: 16px" class="DM_fontsmall">${fileDesc}</span>
+			</div>
+			<div style="vertical-align: top;display: inline;margin-left: 5px;">
+				<input type="button" value="打开" style="width: 95px;display: inline-block;vertical-align: middle;" onclick="openF(${isFolder},'${filetitle}','${folderNodeGuid}')">&nbsp;<input type="button" value="more_vert" class="material-icons" style="font-size: auto;display: inline-block;vertical-align: middle;" onclick="moreFolder('${filetitle}','${folderNodeGuid}')">
+			</div>
+		</div><span class="panelistic_placeholder"></span>`
+	}
+
+	function model_itemFile(isFolder, filetitle, folderNodeGuid, fileDesc, resguid) {
+		return `
+		<div class="panelistic_panel" style="padding-bottom: 3px;" ondblclick="openF(${isFolder},'${filetitle}','${folderNodeGuid}')" oncontextmenu="moreFile('${filetitle}','${folderNodeGuid}')">
+			<img src="${(!isFolder)?(`https://${getGlobalServerAddr()}/getresourcethumbnail?guid=${resguid}`):'src/img/folder.png'}" ondragstart="return false" style="display:inline;" height="40px" width="40px">
+			<div style="vertical-align: top;display: inline-block;margin-left: 5px;width: calc(100% - 202px);height: 40px;">
+				<span style="vertical-align: top;font-size: 18px;font-weight: bold;-webkit-line-clamp: 1;display:-webkit-box;-webkit-box-orient: vertical;overflow: hidden;" class="DM_fonttitlel">${filetitle}</span>
+				<!--max-length-35chars-->
+				<span style="font-size: 12px;color: #555;display: block;height: 16px" class="DM_fontsmall">${fileDesc}</span>
+			</div>
+			<div style="vertical-align: top;display: inline;margin-left: 5px;">
+				<input type="button" value="打开" style="width: 95px;display: inline-block;vertical-align: middle;" onclick="openF(${isFolder},'${filetitle}','${folderNodeGuid}')">&nbsp;<input type="button" value="more_vert" class="material-icons" style="font-size: auto;display: inline-block;vertical-align: middle;" onclick="moreFile('${filetitle}','${folderNodeGuid}')">
+			</div>
+		</div><span class="panelistic_placeholder"></span>`
+	}
+
+	function moreFile(filetitle, folderNodeGuid) {
+		ipcRenderer.sendToHost('moreFile', filetitle, folderNodeGuid);
+		/*`<input type="button" value="重命名" onclick="panelistic.dialog.dismiss(currDiagId);webview.send('renameFile', ipn);">
+			<input type="button" value="共享文件" onclick="panelistic.dialog.dismiss(currDiagId)">
+			<input type="button" value="删除" onclick="panelistic.dialog.dismiss(currDiagId);webview.send('delObjectFile','${folderNodeGuid}')">`*/
+	}
+
+	function moreFolder(filetitle, folderNodeGuid) {
+		ipcRenderer.sendToHost('moreFolder', filetitle, folderNodeGuid)
+		/*`<input type="button" value="重命名" onclick="panelistic.dialog.dismiss(currDiagId);webview.send('renameFile', ipn);">
+			<input type="button" value="共享文件" onclick="panelistic.dialog.dismiss(currDiagId)">
+			<input type="button" value="删除" onclick="panelistic.dialog.dismiss(currDiagId);webview.send('delObjectFolder','${folderNodeGuid}')">`, '取消')*/
+	}
+	</script>
+</head>
+
+<body>
+	<div id="panelistic_content_sidebar_in" class="DM_fonttitlel" style="overflow:hidden;">
+		<div class="panelistic_panel">
+			<input type="button" onclick="goBack()" value="arrow_back" style="font-size: auto;display: inline-block;vertical-align: middle;" class="material-icons" name="" title="上级文件夹">
+			<input type="button" onclick="refresh()" value="refresh" style="font-size: auto;display: inline-block;vertical-align: middle;" class="material-icons" name="" title="刷新">
+			<input type="button" onclick="goHome()" value="home" style="font-size: auto;display: inline-block;vertical-align: middle;" class="material-icons" name="" title="回到主页">
+			<input id="addrbar" disabled placeholder="资源路径" value="学生平板" style="font-size: auto;display: inline-block;vertical-align: middle;width: calc(100% - 283px);">
+			<input type="button" onclick="uploadFileAndCopy()" disabled id="note_add" value="upload_file" style="font-size: auto;display: inline-block;vertical-align: middle;" class="material-icons" name="" title="上传文件">
+			<input type="button" onclick="uploadFolder()" id="drive_folder_upload" value="drive_folder_upload" style="font-size: auto;display: inline-block;vertical-align: middle;" class="material-icons" name="" title="上传文件夹">
+			<input type="button" onclick="createNF()" value="create_new_folder" style="font-size: auto;display: inline-block;vertical-align: middle;" class="material-icons" name="" title="新建文件夹">
+		</div>
+		<span class="panelistic_placeholder"></span>
+		<span id="spancst" style="overflow:auto;display: block;height: calc(100% - 58px);padding-bottom: 0px;"></span>
+	</div>
+</body>
+
+</html>

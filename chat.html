@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="panelistic3.0-electron.css">
+	<script src="panelistic3.0-electron.js"></script>
+	<script src="func.js"></script>
+	<title>在线答疑</title>
+	<style type="text/css"></style>
+	<link href="maticons.css" rel="stylesheet">
+	<style type="text/css">
+	.panelistic_sidebar_selection {
+		padding: 15px;
+	}
+	</style>
+	<script>
+		let panelistic;
+		let loaddiag;
+		let webview;
+		window.onload = function() {
+			panelistic = new Panelistic();
+			panelistic.initialize();
+
+			webview = document.getElementById('webview')
+
+			getUsers()
+
+			getImgroups()
+
+			webview.addEventListener('ipc-message', (event) => {
+				if (event.channel=="okay") {
+					panelistic.dialog.alert("提示","操作成功完成","确定",()=>{window.location.reload()})
+				}else if(event.channel=="delim"){
+					delIm(event.args[0],event.args[1])
+				}else if(event.channel=="alert"){
+					panelistic.dialog.alert(event.args[0],event.args[1],event.args[2])
+				}else if(event.channel=="delstu"){
+					delStu(event.args[0])
+				} else if (event.channel == "openLargeImg") {
+					require("electron").ipcRenderer.send("olm")
+				}else if (event.channel=="loadok") {
+					panelistic.dialog.dismiss(loaddiag);
+				}
+			})
+
+			webview.src="about:blank";
+		
+		}
+
+		function model_imgroup(groupid,groupname) {
+			return `<div class="panelistic_panel" style="margin:8px;font-size:14px" onclick="openIm('${groupid}',true)"><span style="vertical-align: middle;display: inline-block;"><img src="src/img/ic_placehold.jpg" style="height: 25px;vertical-align: middle;"></span><span style="display: inline-block;vertical-align: middle;position:relative;-webkit-line-clamp: 1;display:-webkit-inline-box;-webkit-box-orient: vertical;overflow: hidden;width:calc(100% - 30px)">&nbsp;${groupname}</span></div>`
+		}
+
+		function model_teacher(teachername,teacherguid,teacheraccount) {
+			return `<div class="panelistic_panel" style="margin:8px;font-size:14px" onclick="openIm('${teacherguid}',false,'${teachername}','${teacheraccount}')"><span style="vertical-align: middle;display: inline-block;"><img src="https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${teacheraccount + '_teacherpad'}&packageid=UserAvatar_${teacheraccount}" style="height: 25px;width: 25px;vertical-align: middle;" onerror="this.src='src/no_pic.jpg'"></span><span style="display: inline-block;vertical-align: middle;position:relative;-webkit-line-clamp: 1;display:-webkit-inline-box;-webkit-box-orient: vertical;overflow: hidden;width:calc(100% - 30px)">&nbsp;${teachername}</span></div>`
+		}
+
+		function delStu(stuxb) {
+			let alldatas = JSON.parse(fs.readFileSync(getuserdatapath() + "/iminfo"))
+			panelistic.dialog.confirm("删除成员提示","确定要删除讨论组成员 "+alldatas.users[stuxb].realname+" 吗？","确定","取消",(select)=>{
+				if (select) {
+					if (alldatas.users[stuxb].userguid=="ae600da64696432a839532890d8d3f96" && getGlobalUserguid()!="ae600da64696432a839532890d8d3f96") {
+						panelistic.dialog.alert("提示","您没有权限删除该成员","确定");
+					}else{
+						alldatas.users.splice(stuxb,1);
+						console.log(alldatas);
+						simpleRequestDel('https://'+getGlobalServerAddr()+'/restfuldatasource/imgroups/'+alldatas.guid+'.json','',[{ key: 'Set-Cookie', value: 'sessionid=' + getGlobalSessionId() + ';szUserGUID=' + getGlobalUserguid() + ';szUserName=' + globalAccountFile.account }],()=>{
+							autoRetryRequest("https://" + getGlobalServerAddr() + "/restfuldatasource/imgroups/dummy.json", JSON.stringify(alldatas), [{ key: 'Set-Cookie', value: 'sessionid=' + getGlobalSessionId() + ';szUserGUID=' + getGlobalUserguid() + ';szUserName=' + globalAccountFile.account }], (data) => {
+								console.log(data)
+								panelistic.dialog.alert("提示","删除成功","确定",()=>{window.location.reload()})
+							}, 200, 1000);
+						},(err)=>{if(err.status==401){panelistic.dialog.alert("提示","删除失败，请检查当前账号权限","确定")}else{panelistic.dialog.alert("提示","删除失败","确定")}},2000);
+					}
+				}
+			});
+		}
+
+		let retdata = {}
+
+		function getImgroups() {
+			simpleRequest("https://"+getGlobalServerAddr()+"/restfuldatasource/imgroups//users/?ownerguid="+getGlobalUserguid(),'',[{ key: 'Set-Cookie', value: 'sessionid=' + getGlobalSessionId() + ';szUserGUID=' + getGlobalUserguid() + ';szUserName=' + globalAccountFile.account }],(data)=>{
+				retdata = JSON.parse(data)
+				console.log(retdata)
+				let allstr=""
+				for (var i = 0; i < retdata.length; i++) {
+					allstr += model_imgroup(i,retdata[i].name);
+				}
+				document.getElementById('sectionup').insertAdjacentHTML("beforeend", allstr)
+				document.getElementById('listref').style.display='none';
+			},(err)=>{
+				console.log(err)
+				panelistic.dialog.alert("提示","刷新列表出错，请检查网络后重试","确定")
+			},20000,true)
+		}
+
+		function getAllTeachers() {
+			let classes = globalDataFile.classes;
+			let teacherLists = [];
+			for (var i = 0; i < classes.length; i++) {
+				let allusers = classes[i].teachers;
+				for (var j = 0; j < allusers.length; j++) {
+					if (allusers[j].type==2 && !teacherLists.some(obj => obj.guid == allusers[j].guid)) {
+						teacherLists.push(allusers[j])
+					}
+				}
+			}
+			return teacherLists;
+		}
+
+		function getUsers() {
+			retdata = getAllTeachers()
+			console.log(retdata)
+			let allstr=""
+			for (var i = 0; i < retdata.length; i++) {
+				allstr += model_teacher(retdata[i].realname,retdata[i].guid,retdata[i].username);
+			}
+			document.getElementById('sectionup').insertAdjacentHTML("beforeend", allstr)
+			document.getElementById('listref').style.display='none';
+		}
+
+		function delIm(imguid,destroy) {
+			panelistic.dialog.confirm("删除讨论组",destroy?"即将删除讨论组并覆写后台成员数据，确定要销毁讨论组吗？":"确定要删除讨论组吗？删除后学校服务器也可查询到讨论组成员数据","确定","取消",(result)=>{
+				if (result) {
+					panelistic.dialog.confirm("再次确认","<span style='color:red;font-weight:bold;'>警告！您正在删除讨论组！操作记录将在后台可见！确定继续吗</span>","确定","取消",(result2)=>{
+						if (result2) {
+							if (!destroy) {yesDelIm(imguid);}
+							else {
+								overWriteIm(imguid)
+							}
+							
+						}
+					})
+				}
+			})
+		}
+
+		// function openIm(imid) {
+		// 	fs.writeFileSync(getuserdatapath()+'/iminfo',JSON.stringify(retdata[imid]));
+		// 	try{
+		// 		// webview.openDevTools({mode:"detach"})
+		// 		webview.loadURL(__dirname+'/iminfo.html')
+		// 	}catch{
+		// 		webview.src=__dirname+'/iminfo.html';
+		// 	}
+
+		// }
+
+		function openIm(imid, isIm, username,useraccount) {
+			loaddiag = panelistic.dialog.salert("请稍等");
+			if (isIm) {
+				fs.writeFileSync(getuserdatapath()+'/iminfo',JSON.stringify(retdata[imid]));
+				webview.loadURL(__dirname+'/imchat.html')
+			}else{
+				fs.writeFileSync(getuserdatapath()+'/iminfo',JSON.stringify({imid:imid,username:username,type2:true,useraccount:useraccount}));
+				webview.loadURL(__dirname+'/imchat.html')
+			}
+		}
+
+		function yesDelIm(imguid) {
+			simpleRequestDel('https://'+getGlobalServerAddr()+'/restfuldatasource/imgroups/'+imguid+'.json','',[{ key: 'Set-Cookie', value: 'sessionid=' + getGlobalSessionId() + ';szUserGUID=' + getGlobalUserguid() + ';szUserName=' + globalAccountFile.account }],()=>{
+				panelistic.dialog.alert("提示","删除成功","确定",()=>{window.location.reload()})
+			},(err)=>{if(err.status==401){panelistic.dialog.alert("提示","删除失败，请检查当前账号权限","确定")}else{panelistic.dialog.alert("提示","删除失败","确定")}},2000);
+		}
+
+		function overWriteIm(imguid) {
+			let alldatas = JSON.parse(fs.readFileSync(getuserdatapath() + "/iminfo"))
+			alldatas.users = null;
+			alldatas.ownerguid = null;
+			alldatas.name = null;
+			console.log(alldatas);
+			simpleRequestDel('https://'+getGlobalServerAddr()+'/restfuldatasource/imgroups/'+alldatas.guid+'.json','',[{ key: 'Set-Cookie', value: 'sessionid=' + getGlobalSessionId() + ';szUserGUID=' + getGlobalUserguid() + ';szUserName=' + globalAccountFile.account }],()=>{
+				autoRetryRequest("https://" + getGlobalServerAddr() + "/restfuldatasource/imgroups/dummy.json", JSON.stringify(alldatas), [{ key: 'Set-Cookie', value: 'sessionid=' + getGlobalSessionId() + ';szUserGUID=' + getGlobalUserguid() + ';szUserName=' + globalAccountFile.account }], (data) => {
+					console.log(data)
+					simpleRequestDel('https://'+getGlobalServerAddr()+'/restfuldatasource/imgroups/'+alldatas.guid+'.json','',[{ key: 'Set-Cookie', value: 'sessionid=' + getGlobalSessionId() + ';szUserGUID=' + getGlobalUserguid() + ';szUserName=' + globalAccountFile.account }],()=>{
+						panelistic.dialog.alert("提示","删除成功","确定",()=>{window.location.reload()})
+					},()=>{
+					panelistic.dialog.alert("提示","删除成功","确定",()=>{window.location.reload()})},2000);
+				}, 200, 1000);
+			},(err)=>{if(err.status==401){panelistic.dialog.alert("提示","删除失败，请检查当前账号权限","确定")}else{panelistic.dialog.alert("提示","删除失败","确定")}},2000);
+		}
+
+		function createIM() {
+			webview.src = (__dirname+'/seluser.html')
+		}
+
+
+		// Windows 10 detection
+		if (isWin10()) {
+			add_css(`body{
+				background-image: url(src/cmbg/light.jpg) !important;
+				background-position: center center;
+				background-repeat: no-repeat;
+				background-size:cover;
+				backdrop-filter:blur(5px);
+			}
+			#panelistic_content{
+				background-color:#fff8 !important
+			}
+			@media (prefers-color-scheme: dark) {
+				body{
+					background-image: url(src/cmbg/dark.jpg) !important
+				}
+				#panelistic_content{
+					background-color:#0008 !important
+				}
+			}`)
+		}
+	</script>
+</head>
+
+<body>
+		<div id="panelistic_blur"></div>
+	<div id="panelistic_window" ondragstart="return false;">
+		<div id="panelistic_content">
+			<div id="panelistic_sidebar" style="top: 0px;height: 100%">
+				<div id="sectionup" style="scroll-behavior: auto;overflow: auto;height: calc(100% - 54px)" id="alllists">
+					<span style="font-size:14px;padding-left:8px" id="listref">正在刷新列表...</span>
+				</div>
+				<div style="background-color:#fff8"><input type="button" value="创建讨论组" onclick="createIM()" style="margin:8px"></div>
+			</div>
+			<div id="panelistic_content_sidebar">
+				<webview id="webview" nodeintegration="true" disablewebsecurity webpreferences="contextIsolation=no" />
+				</webview>
+			</div>
+		</div>
+	</div>
+	<style type="text/css">
+	body {
+		background-color: #aabfcc;
+	}
+
+	@media (prefers-color-scheme: dark) {
+		body {
+			background-color: #45315ccc;
+		}
+	}
+	</style>
+</body>
+<script src="electron-mica.js"></script>
+
+</html>
