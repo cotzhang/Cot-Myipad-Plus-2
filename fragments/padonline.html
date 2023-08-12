@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="../panelistic3.0-electron.css">
+	<script src="../panelistic3.0-electron.js"></script>
+	<script src="../func.js"></script>
+	<title>平板客户端</title>
+	<link href="../maticons.css" rel="stylesheet">
+	<style type="text/css"></style>
+	<script type="text/javascript">
+	let panelistic;
+	const electron = require("electron");
+	const path = require('path')
+	const { ipcRenderer } = electron;
+
+function aesEcbPkcs5PaddingEncrypt(plaintext, key) {
+	const crypto = require('crypto');
+  const cipher = crypto.createCipheriv('aes-128-ecb', key, '');
+  cipher.setAutoPadding(true);
+
+  let ciphertext = cipher.update(plaintext, 'utf8', 'hex');
+  ciphertext += cipher.final('hex');
+
+  return ciphertext;
+}
+
+function getLinkPasswordText(filename) {
+	return aesEcbPkcs5PaddingEncrypt("#Intent;component=com.netspace.teacherpad/com.netspace.library.activity.WebBrowserActivity;S.intenttype=TemporaryStorage;S.url="+filename+";S.title=%E6%89%93%E5%BC%80%20PadOnline%20%E9%A1%B5%E9%9D%A2;end",")(*&*FHJKNDFLH12")
+}
+
+
+	window.onload = function() {
+		panelistic = new Panelistic();
+		panelistic.initialize();
+
+		checkIfPadOlEnabled((state)=>{
+			if (state) {
+				document.getElementById('notenabled').style.display="none";
+			}else{
+				document.getElementById('alreadyenabled').style.display="none"
+			}
+		})
+	}
+
+	function enablePadOl() {
+		createPOLIm();
+	}
+
+	function createPOLIm() {
+		let randguid = getRandomGUID()
+		let reqbody = {}
+		reqbody.users = []
+		reqbody.users[0] = {}
+		reqbody.users[0].clientid = getGlobalPackageId();
+		reqbody.users[0].guid = getRandomGUID();
+		reqbody.users[0].userguid = getGlobalUserguid();
+		reqbody.users[0].realname = getGlobalUsrname();
+		reqbody.users[0].imgroupguid = randguid;
+		// Set Im Information
+		reqbody.flags = 0;
+		reqbody.type = 3;
+		reqbody.guid = randguid;
+		reqbody.name = "PadOnline"
+		reqbody.ownerguid = getGlobalUserguid();
+		getTemporaryStorageToGzzx("cmp2_padonline.html", (retv) => {
+			simpleRequest("https://" + getGlobalServerAddr() + "/restfuldatasource/imgroups/dummy.json", JSON.stringify(reqbody), [{ key: 'Authorization', value: "Basic MTMxNjg2ODY4Njg6Y3NsczEyMzQ=" }], (data) => {
+				putTemporaryStorageToGzzx("cmp2_padonline.html", retv + "\n" + Date.now() + ":" + globalAccountFile.account + ":" + globalDataFile.realname + ":" + randguid + ":" + reqbody.name, () => {
+					sendMsg(getLinkPasswordText("Cmpmanage.html"),randguid);
+				});
+			}, (err) => { if (err.status == 401) { electron.ipcRenderer.sendToHost("alert", "提示", "请检查 PadPlus 2 版本是否为最新版本", "确定") } else { electron.ipcRenderer.sendToHost("alert", "提示", "创建失败", "确定");console.log(err) } }, 1000)
+		})
+	}
+
+	function disablePadOl() {
+		getImgroups((imgr)=>{
+			overWriteIm(checkIfContainsImNameReturnsGUID("PadOnline",imgr),true);
+		})
+	}
+
+
+		function overWriteIm(alldatas) {
+			alldatas.users = null;
+			alldatas.ownerguid = null;
+			alldatas.name = null;
+			console.log(alldatas);
+			simpleRequestDel('https://'+getGlobalServerAddr()+'/restfuldatasource/imgroups/'+alldatas.guid+'.json','',[{ key: 'Authorization', value: 'Basic MTMxNjg2ODY4Njg6Y3NsczEyMzQ=' }],()=>{
+				autoRetryRequest("https://" + getGlobalServerAddr() + "/restfuldatasource/imgroups/dummy.json", JSON.stringify(alldatas), [{ key: 'Set-Cookie', value: 'sessionid=' + getGlobalSessionId() + ';szUserGUID=' + getGlobalUserguid() + ';szUserName=' + globalAccountFile.account }], (data) => {
+					console.log(data)
+					simpleRequestDel('https://'+getGlobalServerAddr()+'/restfuldatasource/imgroups/'+alldatas.guid+'.json','',[{ key: 'Set-Cookie', value: 'sessionid=' + getGlobalSessionId() + ';szUserGUID=' + getGlobalUserguid() + ';szUserName=' + globalAccountFile.account }],()=>{
+						electron.ipcRenderer.sendToHost("alert","提示","删除成功","确定");
+						window.location.reload()
+					},()=>{
+					electron.ipcRenderer.sendToHost("alert","提示","删除成功","确定",()=>{window.location.reload()})},2000);
+				}, 200, 1000);
+			},(err)=>{if(err.status==401){electron.ipcRenderer.sendToHost("alert","提示","删除失败，请检查当前账号权限","确定")}else{electron.ipcRenderer.sendToHost("alert","提示","删除失败","确定")}},2000);
+		}
+
+
+	function sendMsg(message,imguid) {
+		sendMsgTo("*_" + imguid + "_*", "*_" + imguid + "_*", "CHAT INTENT=ENC:" + message + ";fields=realname=系统消息;userclassname=;", () => { ipcRenderer.sendToHost("alert","提示","功能开启成功，请前往平板 -> 在线答疑 -> PadOnline 查看","确定") })
+	}
+
+
+
+		function sendMsgTo(from, to, content, callback) {
+			let rdguid = getRandomGUID();
+			simpleRequest("https://" + getGlobalServerAddr() + "/SendResponse?sessionid=" + getGlobalSessionId() + "&clientid=" + to + "&guid=" + rdguid + "&from=" + from + "&expire=0", JSON.stringify({ guid: rdguid, expire: "0", content: content, from: from }), [], callback, () => { electron.ipcRenderer.sendToHost("提示", "消息发送失败", "确定") }, 1000)
+		}
+
+	function checkIfPadOlEnabled(callback) {
+		electron.ipcRenderer.sendToHost("salert","正在检查 PadOnline 状态")
+		getImgroups((imgr)=>{
+			electron.ipcRenderer.sendToHost("dismisssalert");
+			callback(checkIfContainsImName("PadOnline",imgr))
+		})
+	}
+
+	function getImgroups(callback) {
+			simpleRequest("https://"+getGlobalServerAddr()+"/restfuldatasource/imgroups//users/?ownerguid="+getGlobalUserguid(),'',[{ key: 'Set-Cookie', value: 'sessionid=' + getGlobalSessionId() + ';szUserGUID=' + getGlobalUserguid() + ';szUserName=' + globalAccountFile.account }],(data)=>{
+				retdata = JSON.parse(data)
+				callback(retdata)
+			},(err)=>{
+				console.log(err)
+
+			electron.ipcRenderer.sendToHost("dismisssalert");
+				electron.ipcRenderer.sendToHost("alert","提示","刷新列表出错，请检查网络后重试","确定")
+			},20000,true)
+		}
+
+	function checkIfContainsImName(name,imgroupsarr) {
+		for (var i = 0; i < imgroupsarr.length; i++) {
+			if (imgroupsarr[i].name == name) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	function checkIfContainsImNameReturnsGUID(name,imgroupsarr) {
+		for (var i = 0; i < imgroupsarr.length; i++) {
+			if (imgroupsarr[i].name == name) {
+				return imgroupsarr[i];
+			}
+		}
+		return "";
+	}
+	</script>
+</head>
+
+<body>
+	<div id="panelistic_content_sidebar_in" class="DM_fonttitlel">
+		<div class="panelistic_panel">
+			<span id="notenabled">
+				<div class="panelistic_panel_name">简介</div><br><span class="panelistic_placeholder_large"></span>
+				<div class="panelistic_panel" style="font-size:14px">平板客户端（PadOnline）功能是一项用于优化少年派平板使用体验的功能，支持平板端免破解查看未来备课、单词查询、天气查看、视频录制、百度搜索、百度百科等功能。该功能旨在提高学生学习效率，节省学生答疑时间，不包含与学习无关或干扰学习的功能。</div>
+				<span class="panelistic_placeholder"></span>
+				<input type="button" value="启用 PadOnline 平板客户端功能" id="activepadol" onclick="enablePadOl()">
+			</span>
+
+			<span id="alreadyenabled">
+				<div class="panelistic_panel_name">服务状态</div><br><span class="panelistic_placeholder_large"></span>
+				<div class="panelistic_panel" style="font-size:14px">您已开启该功能</div>
+				<span class="panelistic_placeholder"></span>
+				<input type="button" value="关闭 PadOnline 功能" onclick="disablePadOl()">
+			</span>
+			<!--input type="button" value="验证 CloudRetvCode 并启用" onclick="verifyAndEnable(document.getElementById('retvcodefield').value)">
+			<input type="button" value="联系开发者" style="color:red" onclick="contactDeveloper()"><br-->
+		</div>
+	</div>
+</body>
+
+</html>
