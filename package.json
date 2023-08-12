@@ -11,7 +11,8 @@
 		"publish": "node version.js && npm run buildlinux && electron-builder && node cos.js",
 		"buildwin": "electron-builder",
 		"buildlinux": "npx electron-packager ./ PadPlus --platform=linux ./build --overwrite --ignore=\"(build|addition)\" --out=build/linux --asar",
-		"buildmac": "npx electron-packager ./ PadPlus --platform=darwin ./build --overwrite --ignore=\"(build|addition)\" --out=build/darwin --asar"
+		"buildmac64": "npx electron-packager ./ PadPlus --platform=darwin --arch=x64 ./build --overwrite --ignore=\"(build|addition)\" --out=build/darwin --asar",
+		"buildmacarm": "npx electron-packager ./ PadPlus --platform=darwin --arch=arm64 ./build --overwrite --ignore=\"(build|addition)\" --out=build/darwin --asar"
 	},
 	"build": {
 		"productName": "PadPlus",
