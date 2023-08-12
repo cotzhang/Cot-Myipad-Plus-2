@@ -160,7 +160,7 @@ getuserdatapath = function() {
 }
 
 // Linux detection
-if (process.platform === 'linux') {
+if (process.platform != 'win32') {
 	// Hey, you are using the linux system!
 	getuserdatapath = () => {
 		return process.cwd() + '/ldata'

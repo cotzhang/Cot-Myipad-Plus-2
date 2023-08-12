@@ -12,7 +12,7 @@ let getuserdatapath = () => {
 }
 
 // Linux detection
-if (process.platform === 'linux') {
+if (process.platform != 'win32') {
 	// Hey, you are using the linux system!
 	getuserdatapath = () => {
 		return process.cwd() + '/ldata'
@@ -600,7 +600,7 @@ let globalTestMode = false;
 window.onload = function() {
 
 	// Linux
-	if (process.platform === 'linux') {
+	if (process.platform != 'win32') {
 		document.getElementById('sel_questionbook').style.display = 'none';
 		document.getElementById('sel_libres').style.display = 'none';
 	}
