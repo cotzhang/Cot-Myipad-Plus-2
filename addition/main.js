@@ -1,0 +1,540 @@
+const electron = require('electron');
+const path = require('path');
+const os = require('os')
+const fs = require('fs')
+const remote = require("@electron/remote/main")
+// File Download
+const download = require('download');
+
+const ex = process.execPath;
+// const isDev = require('electron-is-dev')
+
+function getuserdatapath() {
+	return require('path').join(process.env.appdata, 'cmp').replaceAll('\\', '/');
+}
+
+// Linux detection
+if (process.platform === 'linux') {
+	// Hey, you are using the linux system!
+	getuserdatapath = () => {
+		return process.cwd() + '/ldata'
+	}
+}
+
+let win;
+
+
+function isWin10() {
+	return !(process.getSystemVersion().startsWith('10.0') && new Number(process.getSystemVersion().split('.')[2]) > 19046 && process.platform === 'win32')
+}
+const { session } = require('electron')
+
+if (process.platform === 'win32') {
+	electron.app.setAppUserModelId('平板+')
+}
+
+if (!fs.existsSync(getuserdatapath())) fs.mkdirSync(getuserdatapath())
+
+
+const isFirstInstance = electron.app.requestSingleInstanceLock()
+
+function isDev() {
+	return !fs.existsSync(process.cwd() + '/resources/app.asar');
+}
+
+// https://gzzx.lexuewang.cn:8003/GetTemporaryStorage?filename=
+const https = require('https');
+
+function getSignContent(url, callback) {
+	require("axios")
+		.get(url)
+		.then(function(response) {
+			callback(response.data.replaceAll('\x00', '').replaceAll('\u0000', '').replaceAll('\b', ''))
+		})
+		.catch(function(error) {
+			const { dialog } = require('electron')
+			dialog.showMessageBoxSync({
+				title: '平板+',
+				message: '\u65e0\u6cd5\u8fde\u63a5\u5230\u670d\u52a1\u5668\uff0c\u8bf7\u68c0\u67e5\u7f51\u7edc\u8fde\u63a5\u3002',
+				buttons: ['确定'],
+				type: 'error'
+			});
+			electron.app.exit();
+		});
+}
+
+
+
+function sendToGzzx(key, value, cb) {
+	const options = {
+		hostname: 'gzzx.lexuewang.cn',
+		port: 8003,
+		path: `/PutTemporaryStorage?filename=${key}`,
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/text',
+			'Content-Length': value.length
+		}
+	};
+
+	const req = https.request(options, res => {
+		console.log(`${key}: ${res.statusCode}`);
+		cb();
+	});
+
+	req.on('error', error => {
+		console.error(error);
+		cb(error);
+	});
+
+	req.write(value);
+	req.end();
+}
+
+
+// This is used for check signature!
+function checkIfIsDev() {
+	const crypto = require('crypto');
+	// 读取 app.asar 文件的内容
+	process.noAsar = true;
+	const asarData = fs.readFileSync(process.cwd() + '/resources/app.asar');
+	process.noAsar = false;
+	let reqstrfrnt = "Cmp";
+	let reqmid = "Sign"
+	let version = fs.readFileSync(__dirname + "/versionBUILD");
+	getSignContent("https://gzzx.lexuewang.cn:8003/GetTemporaryStorage?filename=" + reqstrfrnt + reqmid + version, (signatureData) => {
+		const hasher = crypto.createHash('sha256');
+		hasher.update(asarData);
+		const signatureValue = hasher.digest("hex");
+		if (signatureValue == (signatureData)) {
+			setTimeout(
+				checkIfCanSpawnWindow,
+				process.platform == "linux" ? 1000 : 0
+			);
+		} else {
+			wrSig()
+			electron.app.exit();
+		}
+	})
+}
+
+function wrSig() {
+	const { dialog } = require('electron')
+	dialog.showMessageBoxSync({
+		title: '平板+',
+		message: '\u5f53\u524d\u7248\u672c\u8fc7\u4f4e\uff0c\u65e0\u6cd5\u8fde\u63a5\u5230\u670d\u52a1\u5668\uff0c\u8bf7\u5230\u5b98\u7f51 cotzhang.cn \u4e0b\u8f7d\u6700\u65b0\u7248\u672c\u3002',
+		buttons: ['确定'],
+		type: 'error'
+	});
+	electron.app.exit();
+}
+
+electron.app.whenReady().then(() => {
+	if (!process.argv.includes('--help')) {
+		if (isDev()) {
+			setTimeout(
+				checkIfCanSpawnWindow,
+				process.platform == "linux" ? 1000 : 0
+			);
+		} else if (process.argv.includes('--boot')) {
+			setTimeout(
+				checkIfIsDev(),
+				6000
+			);
+		} else {
+			checkIfIsDev();
+		}
+
+	} else {
+		console.log(`PadPlus V${JSON.parse(fs.readFileSync(__dirname+'/package.json')).version}
+Developed by @cotzhang
+=============================
+
+Usage: PadPlus [--dev-tools testcode] [--hide-win]
+--dev-tools\tOpen Developer Tools for debug purpose.
+\ttestcode\tTest code for test purpose.
+--hide-win\tLaunch application with a hidden window.
+--stream\tStart stream hosting.
+
+`);
+		electron.app.exit()
+	}
+})
+
+const readline = require('readline');
+let r1 = readline.createInterface({
+	input: process.stdin,
+	output: process.stdout
+});
+
+function checkIfCanSpawnWindow() {
+	if (!isFirstInstance) {
+		if (!fs.existsSync(getuserdatapath() + "/secondinstance")) {
+			console.log("Another padplus is running.")
+			electron.app.exit()
+		}
+	}
+	useDevtools = false;
+	if (process.argv.includes('--dev-tools')) {
+		if (process.argv.includes('cot64840')) {
+			useDevtools = true;
+		} else {
+			console.log("Test code illegal.\nPlease specify a correct test code to continue.")
+			electron.app.exit()
+		}
+	}
+	win = new electron.BrowserWindow({
+		backgroundColor: '#00000000',
+		// resizable: false,
+		minWidth: 420,
+		minHeight: 400,
+		width: 870,
+		height: 670,
+		webPreferences: {
+			nodeIntegration: true,
+			enableRemoteModule: true,
+			contextIsolation: false,
+			webviewTag: true,
+			nodeIntegrationInWorker: true,
+			devTools: useDevtools
+		},
+		icon: __dirname + '/icon.png',
+		show: false
+	});
+	makeTray()
+
+	const { nativeImage } = require('electron');
+	let imgwidth;
+	let imgheight;
+
+	const wallpaper = require('node-wallpaper').default;
+	wallpaper.get().then(wallpaper => {
+		const image = nativeImage.createFromPath(wallpaper);
+		const size = image.getSize();
+		imgwidth = size.width;
+		imgheight = size.height;
+
+		fs.watchFile(wallpaper, (curr, prev) => {
+			win.webContents.executeJavaScript(`refWallpaper()`);
+		});
+	});
+	const { width, height } = electron.screen.getPrimaryDisplay().workAreaSize;
+	// 监听窗口的 move 事件
+	win.on('move', () => {
+		const [x, y] = win.getPosition();
+		const wallpaperX = x + 10;
+		const wallpaperY = y + 6;
+		win.webContents.insertCSS(`#bgimg{left:${-wallpaperX}px !important;top:${-wallpaperY}px !important;height:${height}px !important;width:${width}px !important;}`);
+	});
+
+	require('@electron/remote/main').initialize()
+	require('@electron/remote/main').enable(win.webContents)
+	win.loadFile('index.html')
+	//win.setHasShadow(true)
+	// const { Menu, BrowserWindow } = require('electron'); //引入
+	// let template = [
+	// 	{
+	// 		label:"◀",
+	// 		click:()=>{
+	// 			win.webContents.send('rywebback')
+	// 		}
+	// 	},
+	// 	{
+	// 		label: '提取文件',
+	// 		click:()=>{
+	// 			win.webContents.send('ryfilelink')
+	// 		}
+	// 	},
+	// ]
+	// let m = Menu.buildFromTemplate(template);
+	// Menu.setApplicationMenu(m);
+	win.removeMenu();
+	win.webContents.session.setCertificateVerifyProc((request, callback) => {
+		callback(0)
+	})
+	electron.app.on('second-instance', (event, commandLine, workingDirectory, additionalData) => {
+		//输入从第二个实例中接收到的数据
+		console.log(additionalData)
+		//有人试图运行第二个实例，我们应该关注我们的窗口
+		if (win) {
+			if (win.isMinimized()) win.restore()
+
+			if (!fs.existsSync(getuserdatapath() + '/relogin')) { win.show() }
+			win.focus()
+		}
+	})
+
+	//win.setAlwaysOnTop("alwaysOnTop")
+	// win.webContents.openDevTools({ mode: "detach" })
+	remote.enable(win.webContents)
+	win.webContents.on('did-finish-load', () => {
+		if ((!process.argv.includes('--boot')) && (!process.argv.includes('--hide-win'))) {
+			const [x, y] = win.getPosition();
+			const wallpaperX = x + 10;
+			const wallpaperY = y + 6;
+			win.webContents.insertCSS(`#bgimg{left:${-wallpaperX}px !important;top:${-wallpaperY}px !important;height:${height}px !important;width:${width}px !important;}`);
+
+			if (!fs.existsSync(getuserdatapath() + '/relogin')) { win.show() }
+		}
+		if (process.argv.includes('--dev-tools')) {
+			win.webContents.openDevTools({ mode: "detach" })
+		}
+
+		if (fs.existsSync(getuserdatapath() + "/secondinstance")) {
+			const [x, y] = win.getPosition();
+			const wallpaperX = x + 10;
+			const wallpaperY = y + 6;
+			win.webContents.insertCSS(`#bgimg{left:${-wallpaperX}px !important;top:${-wallpaperY}px !important;height:${height}px !important;width:${width}px !important;}`);
+
+			if (!fs.existsSync(getuserdatapath() + '/relogin')) { win.show() }
+			fs.unlinkSync(getuserdatapath() + "/secondinstance")
+		}
+	});
+	win.on('close', (e) => {
+		try {
+			if (!JSON.parse(fs.readFileSync(getuserdatapath() + '/config')).tray) {
+				return;
+			}
+		} catch (err) { return }
+		e.preventDefault(); // 阻止退出程序
+		// win.setSkipTaskbar(true) // 取消任务栏显示
+		win.hide(); // 隐藏主程序窗口
+	})
+	// win.on('show', (e) => {
+	// 	delTray()
+	// })
+	if (process.argv.includes('--stream')) {
+		startWorker(30)
+	}
+	ckfdl(win);
+	setInterval(() => {
+
+		ckfdl(win);
+	}, 1500)
+
+	return win;
+}
+
+electron.ipcMain.on('testmode', (event, ...args) => {
+	win.webContents.openDevTools({ mode: "detach" })
+})
+
+electron.ipcMain.on('openwin', (event, ...args) => {
+	win.show()
+	console.log('Notification Clicked')
+})
+
+electron.ipcMain.on('exit', (event, ...args) => {
+	electron.app.exit()
+})
+
+electron.ipcMain.on('dragfile', (event, ...args) => {
+	console.log('dragging')
+	win.webContents.startDrag(args[0])
+})
+
+// Boot Load On!
+electron.ipcMain.on('openAutoStart', () => {
+	console.log('Boot Load On!', ex)
+	electron.app.setLoginItemSettings({
+		openAtLogin: true,
+		path: ex,
+		args: ['--boot']
+	});
+});
+
+// Boot Load Off!
+electron.ipcMain.on('closeAutoStart', () => {
+	console.log('Boot Load Off!', ex)
+	electron.app.setLoginItemSettings({
+		openAtLogin: false,
+		path: ex,
+		args: ['--boot']
+	});
+})
+
+// Tray
+let tray = null;
+
+function ckfdl(win) {
+	exec('tasklist | findstr Fiddler.exe', (error, stdout, stderr) => {
+		if (stdout.includes('Fiddler.exe')) {
+			win.destroy();
+			const { dialog } = require('electron')
+			dialog.showMessageBoxSync({
+				title: '提示',
+				message: '\u65e0\u6cd5\u8fde\u63a5\u5230\u670d\u52a1\u5668\uff0c\u8bf7\u5c1d\u8bd5\u91cd\u65b0\u542f\u52a8 PadPlus 2\u3002',
+				buttons: ['确定'],
+				type: 'error'
+			});
+			electron.app.exit();
+		}
+	});
+}
+
+function makeTray() {
+	tray = new electron.Tray(path.join(__dirname, 'snpicon.png'))
+	let contextMenu;
+	if (fs.existsSync(getuserdatapath() + '/account')) {
+		contextMenu = electron.Menu.buildFromTemplate([{
+			label: 'PadPlus 2',
+			icon:__dirname+'/src/icon16.png',
+			enabled:false
+		}, {
+			type: 'separator'
+		}, {
+			label: '自主学习',
+			icon:__dirname+'/src/ic_dashboard_18pt.png',
+			click: function() {
+				win.webContents.send('goto', 'fragments/selflearn')
+				win.show()
+			}
+		}, {
+			label: '课堂实录',
+			icon:__dirname+'/src/ic_movie_18pt.png',
+			click: function() {
+				win.webContents.send('goto', 'classrecord')
+				win.show()
+			}
+		}, {
+			label: '我的设备',
+			icon:__dirname+'/src/ic_screen_share_18pt.png',
+			click: function() {
+				win.webContents.send('goto', 'mypad')
+				win.show()
+			}
+		}, {
+			label: '资源库',
+			icon:__dirname+'/src/ic_folder_special_18pt.png',
+			click: function() {
+				win.webContents.send('goto', 'library')
+				win.show()
+			}
+		}, {
+			label: '在线答疑',
+			icon:__dirname+'/src/ic_movie_18pt.png',
+			click: function() {
+				win.webContents.send('gotochat')
+				win.show()
+			}
+		}, {
+			label: '试题本',
+			icon:__dirname+'/src/ic_collections_bookmark_18pt.png',
+			click: function() {
+				win.webContents.send('goto', 'fragments/cageutils')
+				win.show()
+			}
+		}, {
+			type: 'separator'
+		}, {
+			label: '学校成员',
+			icon:__dirname+'/src/ic_streetview_18pt.png',
+			click: function() {
+				win.webContents.send('goto', 'fragments/schoolconsole')
+				win.show()
+			}
+		}, {
+			label: '我的班级',
+			icon:__dirname+'/src/ic_contact_phone_18pt.png',
+			click: function() {
+				win.webContents.send('goto', 'fragments/userlist')
+				win.show()
+			}
+		}, {
+			type: 'separator'
+		}, {
+			icon:__dirname+'/src/ic_settings_applications_18pt.png',
+			label: '账号与设置',
+			click: function() {
+				win.webContents.send('goto', 'fragments/account')
+				win.show()
+			}
+		}, {
+			type: 'separator'
+		}, {
+			label: '立即同步',
+			icon:__dirname+'/src/ic_restore_page_18pt.png',
+			click: function() {
+				win.webContents.send('sync')
+			}
+		}, {
+			type: 'separator'
+		}, {
+			label: '显示主窗口',
+			icon:__dirname+'/src/ic_branding_watermark_18pt.png',
+			click: function() {
+				win.show()
+			}
+		}, {
+			label: '退出',
+			icon:__dirname+'/src/ic_cancel_18pt.png',
+			click: function() {
+				console.log("Exit!");
+				delTray()
+				win.destroy();
+				electron.app.quit();
+			}
+		}])
+	} else {
+		contextMenu = electron.Menu.buildFromTemplate([{
+			label: '您尚未登录',
+			enabled: false
+		}, {
+			type: 'separator'
+		}, {
+			label: '显示主窗口',
+			click: function() {
+				win.show()
+			}
+		}, {
+			label: '退出',
+			click: function() {
+				console.log("Exit!");
+				delTray()
+				win.destroy();
+				electron.app.quit();
+			}
+		}])
+	}
+	tray.setToolTip('PadPlus 2')
+	tray.setContextMenu(contextMenu)
+	tray.on("click", () => {
+		win.show();
+	})
+}
+
+function delTray() {
+	try {
+		tray.destroy()
+	} catch (err) { console.log("no tray to destroy") }
+}
+
+
+const { spawn, exec } = require('child_process')
+let childProcess
+
+// 启动worker线程
+function startWorker() {
+	// 构建命令和参数
+	const command = `${getuserdatapath()}/MJPEGServer.exe`;
+	const args = [`${getuserdatapath()}/DXGIConsoleApplication.exe`];
+
+	// 执行命令
+	childProcess = spawn(command, args);
+}
+
+// 监听主线程和子线程之间的通信
+electron.ipcMain.on('startStream', (event, arg) => {
+	startWorker()
+})
+
+// 监听主线程和子线程之间的通信
+electron.ipcMain.on('stopStream', (event, arg) => {
+	stopWorker()
+})
+
+// 停止worker线程
+function stopWorker() {
+	childProcess.kill();
+	exec("taskkill /im DXGIConsoleApplication.exe /f")
+}
