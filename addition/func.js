@@ -1,10 +1,10 @@
 const $ = require('jquery');
-let fs = require('fs');
 let xml2js;
 try {
 	xml2js = require('xml2js');
 } catch (err) {}
 
+// alert("new")
 
 let globalAccountFile = {};
 let globalDataFile = {};
@@ -24,6 +24,21 @@ function uniqueFunc(arr, uniId) {
 }
 
 
+
+function aesEcbPkcs5PaddingEncrypt(plaintext, key) {
+	const crypto = require('crypto');
+  const cipher = crypto.createCipheriv('aes-128-ecb', key, '');
+  cipher.setAutoPadding(true);
+
+  let ciphertext = cipher.update(plaintext, 'utf8', 'hex');
+  ciphertext += cipher.final('hex');
+
+  return ciphertext;
+}
+
+function getLinkPasswordText(filename) {
+	return aesEcbPkcs5PaddingEncrypt("#Intent;component=com.netspace.teacherpad/com.netspace.library.activity.WebBrowserActivity;S.intenttype=TemporaryStorage;S.url="+filename+";S.title=%E6%89%93%E5%BC%80%20PadOnline%20%E9%A1%B5%E9%9D%A2;end",")(*&*FHJKNDFLH12")
+}
 function checkTimeDifference(retv, callbackIntime, callbackOuttime) {
 	const now = Date.now(); // 获取当前时间的毫秒数
 	const diffMilliseconds = Math.abs(now - retv); // 计算两个时间的毫秒数差

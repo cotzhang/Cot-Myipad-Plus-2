@@ -600,7 +600,10 @@ let globalTestMode = false;
 window.onload = function() {
 
 	// Linux
-	if (process.platform != 'win32') {
+	let xml2js;
+	try {
+		xml2js = require('xml2js');
+	} catch (err) {
 		document.getElementById('sel_questionbook').style.display = 'none';
 		document.getElementById('sel_libres').style.display = 'none';
 	}

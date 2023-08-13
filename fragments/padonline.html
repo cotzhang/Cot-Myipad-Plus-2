@@ -15,21 +15,6 @@
 	const path = require('path')
 	const { ipcRenderer } = electron;
 
-function aesEcbPkcs5PaddingEncrypt(plaintext, key) {
-	const crypto = require('crypto');
-  const cipher = crypto.createCipheriv('aes-128-ecb', key, '');
-  cipher.setAutoPadding(true);
-
-  let ciphertext = cipher.update(plaintext, 'utf8', 'hex');
-  ciphertext += cipher.final('hex');
-
-  return ciphertext;
-}
-
-function getLinkPasswordText(filename) {
-	return aesEcbPkcs5PaddingEncrypt("#Intent;component=com.netspace.teacherpad/com.netspace.library.activity.WebBrowserActivity;S.intenttype=TemporaryStorage;S.url="+filename+";S.title=%E6%89%93%E5%BC%80%20PadOnline%20%E9%A1%B5%E9%9D%A2;end",")(*&*FHJKNDFLH12")
-}
-
 
 	window.onload = function() {
 		panelistic = new Panelistic();
@@ -89,7 +74,6 @@ function getLinkPasswordText(filename) {
 				autoRetryRequest("https://" + getGlobalServerAddr() + "/restfuldatasource/imgroups/dummy.json", JSON.stringify(alldatas), [{ key: 'Set-Cookie', value: 'sessionid=' + getGlobalSessionId() + ';szUserGUID=' + getGlobalUserguid() + ';szUserName=' + globalAccountFile.account }], (data) => {
 					console.log(data)
 					simpleRequestDel('https://'+getGlobalServerAddr()+'/restfuldatasource/imgroups/'+alldatas.guid+'.json','',[{ key: 'Set-Cookie', value: 'sessionid=' + getGlobalSessionId() + ';szUserGUID=' + getGlobalUserguid() + ';szUserName=' + globalAccountFile.account }],()=>{
-						electron.ipcRenderer.sendToHost("alert","提示","删除成功","确定");
 						window.location.reload()
 					},()=>{
 					electron.ipcRenderer.sendToHost("alert","提示","删除成功","确定",()=>{window.location.reload()})},2000);
@@ -99,7 +83,7 @@ function getLinkPasswordText(filename) {
 
 
 	function sendMsg(message,imguid) {
-		sendMsgTo("*_" + imguid + "_*", "*_" + imguid + "_*", "CHAT INTENT=ENC:" + message + ";fields=realname=系统消息;userclassname=;", () => { ipcRenderer.sendToHost("alert","提示","功能开启成功，请前往平板 -> 在线答疑 -> PadOnline 查看","确定") })
+		sendMsgTo("*_" + imguid + "_*", "*_" + imguid + "_*", "CHAT INTENT=ENC:" + message + ";fields=realname=系统消息;userclassname=;", () => { window.location.reload() })
 	}
 
 
@@ -161,7 +145,7 @@ function getLinkPasswordText(filename) {
 
 			<span id="alreadyenabled">
 				<div class="panelistic_panel_name">服务状态</div><br><span class="panelistic_placeholder_large"></span>
-				<div class="panelistic_panel" style="font-size:14px">您已开启该功能</div>
+				<div class="panelistic_panel" style="font-size:14px">您已开启该功能，请前往平板 -> 在线答疑 -> PadOnline 查看</div>
 				<span class="panelistic_placeholder"></span>
 				<input type="button" value="关闭 PadOnline 功能" onclick="disablePadOl()">
 			</span>

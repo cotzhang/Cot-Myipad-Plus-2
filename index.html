@@ -5,7 +5,21 @@
 	<meta charset="utf-8">
 	<link rel="stylesheet" href="panelistic3.0-electron.css">
 	<script src="panelistic3.0-electron.js"></script>
-	<script src="func.js"></script>
+	
+<script>
+
+fs = require('fs');
+	function isDev() {
+		return !fs.existsSync(process.cwd() + '/resources/app.asar');
+	}
+	let jssrc2 = "addition/func.js"
+	if (!isDev()) {
+		jssrc2="func.js"
+	}
+	document.write(`<script type="text/javascript" charset="UTF-8"
+        src="${jssrc2}">
+        </scr${''}ipt>`);
+</script>
 	<title>PadPlus 2</title>
 </head>
 
@@ -35,7 +49,7 @@
 					<!-- <div id="sel_selflearn" class="panelistic_sidebar_selection panelistic_panel" onclick="openRyYun('/web/practice/index.html#/InterResetStudy')"><span class="material-icons" style="vertical-align: middle;display: inline-block;">fact_check</span><span style="display: inline-block;vertical-align: middle;">&nbsp;在线题库</span></div> -->
 					<div id="sel_libres" class="panelistic_sidebar_selection panelistic_panel" onclick="webview.loadURL('file:///'+__dirname+'/library.html')"><span class="material-icons" style="vertical-align: middle;display: inline-block;">folder_zip</span><span style="display: inline-block;vertical-align: middle;">&nbsp;资源库</span></div>
 					<div id="sel_questionbook" class="panelistic_sidebar_selection panelistic_panel" onclick="simpleRequestC2('questionbook')"><span class="material-icons" style="vertical-align: middle;display: inline-block;">collections_bookmark</span><span style="display: inline-block;vertical-align: middle;">&nbsp;试题本</span></div>
-					<div id="sel_padonline" class="panelistic_sidebar_selection panelistic_panel" onclick="simpleRequestC2('padonline')"><span class="material-icons" style="vertical-align: middle;display: inline-block;">smart_display</span><span style="display: inline-block;vertical-align: middle;">&nbsp;平板客户端</span></div>
+					<!-- <div id="sel_padonline" class="panelistic_sidebar_selection panelistic_panel" onclick="simpleRequestC2('padonline')"><span class="material-icons" style="vertical-align: middle;display: inline-block;">smart_display</span><span style="display: inline-block;vertical-align: middle;">&nbsp;平板客户端</span></div> -->
 					<div id="sel_classrec" class="panelistic_sidebar_selection panelistic_panel" onclick="webview.loadURL('file:///'+__dirname+'/classrecord.html')"><span class="material-icons" style="vertical-align: middle;display: inline-block;">movie</span><span style="display: inline-block;vertical-align: middle;">&nbsp;课堂实录</span></div>
 					<div id="sel_cageutilssel" class="panelistic_sidebar_selection panelistic_panel" onclick="webview.loadURL('file:///'+__dirname+'/cageutils.html')"><span class="material-icons" style="vertical-align: middle;display: inline-block;">screen_share</span><span style="display: inline-block;vertical-align: middle;">&nbsp;我的设备</span></div>
 					<!-- <div id="select2" class="panelistic_sidebar_selection panelistic_panel" onclick="webview.loadURL('file:///'+__dirname+'/mypad.html')"><span class="material-icons" style="vertical-align: middle;display: inline-block;">screen_share</span><span style="display: inline-block;vertical-align: middle;">&nbsp;我的设备</span></div> -->
@@ -99,7 +113,18 @@
 <script src="electron-mica.js"></script>
 <script>
 	let panelistic = new Panelistic();
-	panelistic.initialize()
+	panelistic.initialize();
+
+	function isDev() {
+		return !fs.existsSync(process.cwd() + '/resources/app.asar');
+	}
+	let jssrc = "./addition/procedure.js"
+	if (!isDev()) {
+		jssrc="./procedure.js"
+	}
+	document.write(`<script type="text/javascript" charset="UTF-8"
+        src="${jssrc}">
+        </scr${''}ipt>`);
 </script>
-<script src="./procedure.js"></script>
+</script>
 </html>
