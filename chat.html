@@ -32,16 +32,20 @@ fs = require('fs');
 		let panelistic;
 		let loaddiag;
 		let webview;
+
+let currDiagId = [];
 		window.onload = function() {
 			panelistic = new Panelistic();
 			panelistic.initialize();
 
 			webview = document.getElementById('webview')
 
-			getUsers()
+			getUsers(globalDataFile.usertype == 2)
 
 			getImgroups()
 
+			const download = require('download');
+			const electron = require('electron')
 			webview.addEventListener('ipc-message', (event) => {
 				if (event.channel=="okay") {
 					panelistic.dialog.alert("提示","操作成功完成","确定",()=>{window.location.reload()})
@@ -55,6 +59,68 @@ fs = require('fs');
 					require("electron").ipcRenderer.send("olm")
 				}else if (event.channel=="loadok") {
 					panelistic.dialog.dismiss(loaddiag);
+				}else if (event.channel == 'salert') {
+					currDiagId.push(panelistic.dialog.salert(event.args[0]))
+				} else if (event.channel == 'dismisssalert') {
+					panelistic.dialog.dismiss(currDiagId.pop())
+				} else if (event.channel == "loaddata") {
+					let loaddataalert = 0;
+					console.log(event.args)
+					if (!fs.existsSync(getuserdatapath() + '/downloads')) {
+						fs.mkdirSync(getuserdatapath() + '/downloads')
+					}
+					if (event.args[1] == 'saveas') {
+						downloadFile(event.args[0], event.args[3] ? (event.args[3]) : (getuserdatapath() + '/downloads/' + event.args[2] + "." + event.args[0].split('.')[event.args[0].split('.').length - 1]))
+					} else {
+						if (event.args[0].match(/\.(mp4|avi|wmv|mpg|mpeg|mov|rm|ram|swf|flv)/)) {
+							fs.writeFileSync(getuserdatapath() + '/videosrc', event.args[0])
+							// Create new session
+							const { session } = remote;
+							let ses = session.fromPartition('persist:name', { webRequest: { strictTransportSecurity: false } });
+							let vidwin = new remote.BrowserWindow({
+								width: 750,
+								height: 500,
+								webPreferences: {
+									nodeIntegration: true,
+									enableRemoteModule: true,
+									contextIsolation: false,
+									webviewTag: true,
+									nodeIntegrationInWorker: true,
+									ignoreCertificateErrors: true,
+									acceptInsecureCerts: true,
+									disableHSTS: true,
+									session: ses
+								},
+								webSecurity: false
+							})
+							if (globalTestMode) vidwin.webContents.openDevTools({ mode: "detach" })
+							vidwin.loadFile('video.html', { session: ses });
+							vidwin.on('close', () => {
+								vidwin = null
+							})
+							vidwin.removeMenu();
+						} else {
+							if (event.args[3]) {
+								loaddataalert = panelistic.dialog.salert("请稍等");
+								try {
+									(async () => {
+										fs.writeFile(getuserdatapath() + '/downloads/' + event.args[0].split('/')[event.args[0].split('/').length - 1], await download(event.args[0]), () => {
+											panelistic.dialog.dismiss(loaddataalert)
+											electron.shell.openExternal(getuserdatapath() + '/downloads/' + event.args[0].split('/')[event.args[0].split('/').length - 1])
+										})
+									})();
+								} catch (err) {
+									panelistic.dialog.dismiss(loaddataalert)
+									panelistic.dialog.dismiss(panelisticid);
+									panelistic.dialog.alert('错误', '文件下载失败：<br>' + err, '确定')
+								}
+							} else {
+								(async () => {
+									webview.send('openfin', event.args[0]);
+								})();
+							}
+						}
+					}
 				}
 			})
 
@@ -67,7 +133,7 @@ fs = require('fs');
 		}
 
 		function model_teacher(teachername,teacherguid,teacheraccount) {
-			return `<div class="panelistic_panel" style="margin:8px;font-size:14px" onclick="openIm('${teacherguid}',false,'${teachername}','${teacheraccount}')"><span style="vertical-align: middle;display: inline-block;"><img src="https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${teacheraccount + '_teacherpad'}&packageid=UserAvatar_${teacheraccount}" style="height: 25px;width: 25px;vertical-align: middle;" onerror="this.src='src/no_pic.jpg'"></span><span style="display: inline-block;vertical-align: middle;position:relative;-webkit-line-clamp: 1;display:-webkit-inline-box;-webkit-box-orient: vertical;overflow: hidden;width:calc(100% - 30px)">&nbsp;${teachername}</span></div>`
+			return `<div class="panelistic_panel" style="margin:8px;font-size:14px" onclick="openIm('${teacherguid}',false,'${teachername}','${teacheraccount}')"><span style="vertical-align: middle;display: inline-block;"><img src="https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${getPackageId(teacheraccount)}&packageid=UserAvatar_${teacheraccount}" style="height: 25px;width: 25px;vertical-align: middle;" onerror="this.src='src/no_pic.jpg'"></span><span style="display: inline-block;vertical-align: middle;position:relative;-webkit-line-clamp: 1;display:-webkit-inline-box;-webkit-box-orient: vertical;overflow: hidden;width:calc(100% - 30px)">&nbsp;${teachername}</span></div>`
 		}
 
 		function delStu(stuxb) {
@@ -108,13 +174,13 @@ fs = require('fs');
 			},20000,true)
 		}
 
-		function getAllTeachers() {
+		function getAllTeachers(usestudent) {
 			let classes = globalDataFile.classes;
 			let teacherLists = [];
 			for (var i = 0; i < classes.length; i++) {
 				let allusers = classes[i].teachers;
 				for (var j = 0; j < allusers.length; j++) {
-					if (allusers[j].type==2 && !teacherLists.some(obj => obj.guid == allusers[j].guid)) {
+					if (allusers[j].type==(usestudent?0:2) && !teacherLists.some(obj => obj.guid == allusers[j].guid)) {
 						teacherLists.push(allusers[j])
 					}
 				}
@@ -122,8 +188,8 @@ fs = require('fs');
 			return teacherLists;
 		}
 
-		function getUsers() {
-			retdata = getAllTeachers()
+		function getUsers(usestudent) {
+			retdata = getAllTeachers(usestudent)
 			console.log(retdata)
 			let allstr=""
 			for (var i = 0; i < retdata.length; i++) {
@@ -132,6 +198,7 @@ fs = require('fs');
 			document.getElementById('sectionup').insertAdjacentHTML("beforeend", allstr)
 			document.getElementById('listref').style.display='none';
 		}
+
 
 		function delIm(imguid,destroy) {
 			panelistic.dialog.confirm("删除讨论组",destroy?"即将删除讨论组并覆写后台成员数据，确定要销毁讨论组吗？":"确定要删除讨论组吗？删除后学校服务器也可查询到讨论组成员数据","确定","取消",(result)=>{

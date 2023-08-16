@@ -538,3 +538,43 @@ function stopWorker() {
 	childProcess.kill();
 	exec("taskkill /im DXGIConsoleApplication.exe /f")
 }
+
+// 监听来自渲染进程的选择文件请求
+electron.ipcMain.on('open-img-dialog', (event) => {
+  // 打开文件选择对话框，仅允许选择图片文件
+  electron.dialog.showOpenDialog({
+    properties: ['openFile'],
+    filters: [
+      { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif'] }
+    ],
+    multiSelections: false // 不允许多选
+  }).then((result) => {
+    // 获取选中的文件路径
+    const filePaths = result.filePaths;
+    
+    // 将选中的文件路径发送回渲染进程
+    event.sender.send('selected-img', filePaths[0]);
+  }).catch((err) => {
+    console.log(err);
+  });
+});
+
+// 监听来自渲染进程的选择文件请求
+electron.ipcMain.on('open-voice-dialog', (event) => {
+  // 打开文件选择对话框，仅允许选择图片文件
+  electron.dialog.showOpenDialog({
+    properties: ['openFile'],
+    filters: [
+      { name: 'Music', extensions: ['mp3','m4a','wav','ogg','flac'] }
+    ],
+    multiSelections: false // 不允许多选
+  }).then((result) => {
+    // 获取选中的文件路径
+    const filePaths = result.filePaths;
+    
+    // 将选中的文件路径发送回渲染进程
+    event.sender.send('selected-voice', filePaths[0]);
+  }).catch((err) => {
+    console.log(err);
+  });
+});

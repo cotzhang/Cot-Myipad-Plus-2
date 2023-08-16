@@ -314,45 +314,6 @@
 			return retv;
 		}
 
-		function getResByGUIDSync(guid) {
-			let reqstrs = `<v:Envelope xmlns:v="http://schemas.xmlsoap.org/soap/envelope/" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/">
-    <v:Header/>
-    <v:Body>
-        <GetResourceByGUID xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1">
-            <lpszResourceGUID i:type="d:string">${guid}</lpszResourceGUID>
-        </GetResourceByGUID>
-    </v:Body></v:Envelope>`;
-			let gotdata = requestSync("http://webservice.myi.cn/wmstudyservice/wsdl/GetResourceByGUID", reqstrs);
-			if ((gotdata.responseText).indexOf("<faultstring>Error -4063</faultstring") != -1) {
-				console.log("Wrong Sessionid");
-				fs.writeFileSync(getuserdatapath() + '/relogin', "error");
-				electron.ipcRenderer.sendToHost('reload')
-			} else {
-				return gotdata;
-			}
-		}
-
-
-		function requestSync(pos, body) {
-			//console.log("Requesting:", body)
-			return $.ajax({
-				xhrFields: {
-					withCredentials: true
-				},
-				url: "https://" + serverADDR + "/wmexam/wmstudyservice.WSDL",
-				data: body,
-				dataType: "text",
-				type: "post",
-				timeout: 400,
-				async: false,
-				beforeSend: function(request) {
-					let ck = `sessionid=${globalSsid};userguid=ffffffffffffffffffffffffffffffff`;
-					request.setRequestHeader("Set-Cookie", ck);
-					request.setRequestHeader("SOAPAction", pos);
-				}
-			})
-		}
-
 		function parsePrepareClass(prepareClass, element) {
 			let answersheet = getAnswerSheetOverall(prepareClass);
 			if (answersheet) {

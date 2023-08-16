@@ -1374,6 +1374,8 @@ function openChatWin() {
 		let chatwin = new remote.BrowserWindow({
 			width: 780,
 			height: 650,
+			minWidth: 410,
+			minHeight: 300,
 			backgroundColor: '#00000000',
 			resizable: true,
 			webPreferences: {

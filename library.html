@@ -165,36 +165,7 @@ fs = require('fs');
 		document.getElementById('addrbar').value = ['学生平板'].concat(historyArr).join(' > ')
 	}
 
-	function getResourceByGUID(resourceguid, callback) {
-		let retv = {}
-		let reqstrs = `<v:Envelope xmlns:v="http://schemas.xmlsoap.org/soap/envelope/" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/">
-	<v:Header/>
-	<v:Body>
-		<GetResourceByGUID xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1">
-			<lpszResourceGUID i:type="d:string">${resourceguid}</lpszResourceGUID>
-		</GetResourceByGUID>
-	</v:Body></v:Envelope>`;
-		autoRetryRequestWSDL("http://webservice.myi.cn/wmstudyservice/wsdl/GetResourceByGUID", reqstrs, (allretval) => {
-			try {
-				// console.log(reqstrs)
-				let psretval = allretval.substring(allretval.indexOf('<AS:szXMLContent>') + 17, allretval.indexOf("</AS:szXMLContent>"));
-				var temp = document.createElement("div");
-				temp.innerHTML = psretval;
-				psretval = temp.innerText || temp.textContent;
-				temp = null;
-				allrecs = xmlToJson(parseDom(psretval)[0]);
-				globalTestVar = allrecs;
-				callback(allrecs)
-			} catch (err) {
-				console.warn(err, allretval)
-				electron.ipcRenderer.sendToHost('alert', '出错', '资源信息获取失败', '确定')
-				// debugger;
-				retv.error = 1;
-				retv.scheduledate = "0";
-				retv.date = "0";
-			}
-		}, 500, 500)
-	}
+	
 
 	function searchIdInRootdir(classguid) {
 		for (var i = 0; i < allRootDir.length; i++) {

@@ -2,13 +2,11 @@
 <html>
 
 <head>
-	<meta charset="utf-8">
-	<link rel="stylesheet" href="panelistic3.0-electron.css">
-	<script src="panelistic3.0-electron.js"></script>
-	
-<script>
-
-fs = require('fs');
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="panelistic3.0-electron.css">
+    <script src="panelistic3.0-electron.js"></script>
+    <script>
+        fs = require('fs');
 	function isDev() {
 		return !fs.existsSync(process.cwd() + '/resources/app.asar');
 	}
@@ -20,257 +18,483 @@ fs = require('fs');
         src="${jssrc2}">
         </scr${''}ipt>`);
 </script>
-	<title>title</title>
-	<link href="maticons.css" rel="stylesheet">
-	<style type="text/css"></style>
-	<script type="text/javascript">
-	let panelistic;
-	const electron = require("electron");
-	const path = require('path')
-	const { ipcRenderer } = electron
-	let alldatas = JSON.parse(fs.readFileSync(getuserdatapath() + "/iminfo"))
+    <title>title</title>
+    <link href="maticons.css" rel="stylesheet">
+    <style type="text/css"></style>
+    <script type="text/javascript">
+    let panelistic;
+    const electron = require("electron");
+    const path = require('path')
+    const { ipcRenderer } = electron
+    let alldatas = JSON.parse(fs.readFileSync(getuserdatapath() + "/iminfo"))
 
 
 
-	const findObject = (array, key, value) => {
-		return array.find(object => object[key] === value);
-	};
+    const findObject = (array, key, value) => {
+        return array.find(object => object[key] === value);
+    };
 
-	function infoUser(userguid) {
-		let i = 0;
-		for (; i < globalDataFile.classes.length; i++) {
-			if (findObject(globalDataFile.classes[i].teachers, 'guid', userguid)) {
-				break;
-			}
-		}
-		let allinfos = findObject(globalDataFile.classes[i].teachers, 'guid', userguid);
-		fs.writeFileSync(getuserdatapath() + "/userinfo", JSON.stringify(allinfos));
-		location.href = __dirname + "/fragments/userdetails.html"
-	}
+    function infoUser(userguid) {
+        let i = 0;
+        for (; i < globalDataFile.classes.length; i++) {
+            if (findObject(globalDataFile.classes[i].teachers, 'guid', userguid)) {
+                break;
+            }
+        }
+        let allinfos = findObject(globalDataFile.classes[i].teachers, 'guid', userguid);
+        fs.writeFileSync(getuserdatapath() + "/userinfo", JSON.stringify(allinfos));
+        location.href = __dirname + "/fragments/userdetails.html"
+    }
 
-	window.onload = function() {
-		panelistic = new Panelistic();
-		panelistic.initialize();
-		if (!alldatas.type2) {
-			console.log(alldatas)
-			document.getElementById('tlzname').innerText = alldatas.name;
-			document.getElementById('modulebtn').value = "讨论组管理";
-			document.getElementById('modulebtn').onclick = function() {
-				location.href = __dirname + '/iminfo.html'
-			}
-			document.getElementById('warnonlyreceive').style.display = "none"
-			render_msgIm("*_" + alldatas.guid + "_*")
-		} else {
-			document.getElementById('modulebtn').style.display = "none"
-			//
-			document.getElementById('tlzname').innerText = alldatas.username;
-			document.getElementById('modulebtn').onclick = function() {
-				infoUser(alldatas.imid)
-			}
-			render_msg(getPackageId(1, alldatas.useraccount))
-		}
-	}
-	</script>
+    window.onload = function() {
+        panelistic = new Panelistic();
+        panelistic.initialize();
+        if (!alldatas.type2) {
+            console.log(alldatas)
+            document.getElementById('tlzname').innerText = alldatas.name;
+            document.getElementById('modulebtn').value = "讨论组管理";
+            document.getElementById('modulebtn').onclick = function() {
+                location.href = __dirname + '/iminfo.html'
+            }
+            document.getElementById('warnonlyreceive').style.display = "none"
+            render_msgIm("*_" + alldatas.guid + "_*")
+        } else {
+            document.getElementById('modulebtn').style.display = "none"
+            //
+            document.getElementById('tlzname').innerText = alldatas.username;
+            document.getElementById('modulebtn').onclick = function() {
+                infoUser(alldatas.imid)
+            }
+            render_msg(getPackageId(alldatas.useraccount))
+        }
+    }
+    </script>
 </head>
 
 <body>
-	<div id="panelistic_content_sidebar_in" class="DM_fonttitlel" style="height: calc(100% - 16px);overflow-x: hidden;">
-		<div style="background-color:#fff6;padding: 10px;position: absolute;top: 0px;left: 0px;width: calc(100% - 16px);margin: 0px;">
-			<h3 id="tlzname" style="margin: 0px;display: inline;">标题</h3><input id="modulebtn" style="position: absolute;top: 4px;right: 8px;" type="button" value="用户信息">
-		</div>
-		<style type="text/css">
-		.bubbleleft {
-			position: relative;
-			left: 0px;
-			margin: 8px;
-			vertical-align: middle;
-			display: inline-block;
-			width: calc(100% - 20px);
-		}
+    <div id="panelistic_content_sidebar_in" class="DM_fonttitlel" style="height: calc(100% - 16px);overflow-x: hidden;">
+        <div style="background-color:#fff6;padding: 10px;position: absolute;top: 0px;left: 0px;width: calc(100% - 16px);margin: 0px;">
+            <h3 id="tlzname" style="margin: 0px;display: inline;">标题</h3><input id="modulebtn" style="position: absolute;top: 4px;right: 8px;" type="button" value="用户信息">
+        </div>
+        <style type="text/css">
+        .bubbleleft {
+            position: relative;
+            left: 0px;
+            margin: 8px;
+            vertical-align: middle;
+            display: inline-block;
+            width: calc(100% - 20px);
+        }
 
-		.bubbleright {
-			position: relative;
-			right: 0px;
-			text-align: right;
-			margin: 8px;
-			vertical-align: middle;
-			display: inline-block;
-			width: calc(100% - 20px);
-		}
-		</style>
-		<span id="chatarea" style="position: absolute;top: 45px;left: 0;right: 0;bottom: 186px;overflow-y: auto;overflow-x: hidden;scroll-padding-bottom: 100vh;visibility:hidden;">
-		</span>
-		<span id="modulearea" style="position: absolute;height: 20px;left: 0;right: 0;bottom: 150px;background-color: #fff4;padding: 8px;outline: none;color: #888;"><span id="warnonlyreceive">提示：对方可以收到发送的消息，但平板无法显示</span>
-		</span>
-		<span id="iparea" style="position: absolute;height: 126px;left: 0;right: 0;bottom: 0px;background-color: #fff8;padding: 12px;scroll-behavior: auto;overflow-y: auto;overflow-x: hidden;outline: none;font-size: 14px;" contenteditable><span style='color: grey;word-break: break-all;'>输入发送的消息（Enter）</span>
-		</span>
-		<input type="button" value="发送" id="sendbtn" onclick="sendMsg()" style="position:absolute;right: 16px;bottom: 16px;">
-		<script>
-		var spanElement = document.getElementById("iparea");
+        .bubbleright {
+            position: relative;
+            right: 0px;
+            text-align: right;
+            margin: 8px;
+            vertical-align: middle;
+            display: inline-block;
+            width: calc(100% - 20px);
+        }
+        </style>
+        <span id="chatarea" style="position: absolute;top: 45px;left: 0;right: 0;bottom: 204px;overflow-y: auto;overflow-x: hidden;padding-bottom: 8px;visibility:hidden;">
+        </span>
+        <span id="modulearea" style="position: absolute;height: 38px;left: 0;right: 0;bottom: 150px;background-color: #fff4;padding: 8px;outline: none;color: #888;">
+            <input type="button" value="image" class="material-icons" onclick="electron.ipcRenderer.send('open-img-dialog');" style="vertical-align:middle;">
+            <input type="button" value="graphic_eq" class="material-icons" onclick="electron.ipcRenderer.send('open-voice-dialog');" style="vertical-align:middle;">
+            <input type="button" value="emoji_emotions" class="material-icons" onclick="document.getElementById('emojipanel').style.display=(document.getElementById('emojipanel').style.display=='none')?'inline-block':'none'" style="vertical-align:middle;">
+            <span id="warnonlyreceive" style="font-size:12px;vertical-align:middle;width: calc(100% - 132px);
+    display: inline-block;">提示：对方可以收到发送的消息，但平板需要切换账号后重新登录才能显示</span>
+        </span>
+        <span id="iparea" style="position: absolute;height: 126px;left: 0;right: 0;bottom: 0px;background-color: #fff8;padding: 12px;scroll-behavior: auto;overflow-y: auto;overflow-x: hidden;outline: none;font-size: 14px;" contenteditable><span style='color: grey;word-break: break-all;'>输入发送的消息（Enter）</span>
+        </span>
+        <span id="emojipanel" style="position: absolute;
+        display: none;
+    height: 194px;
+    left: 0;
+    right: 0;
+    bottom: 204px;
+    background-color: #fff8;
+    padding: 12px;
+    scroll-behavior: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    outline: none;
+    font-size: 14px;">
+            <div class="emoji-grid" id="emojigrid"></div>
+        </span>
+        <script>
+            let totalstr = "";
+        	for (var i = 0; i < 90; i++) {
+        		totalstr+="<img class='emoji-item' src='src/smiley/smiley_"+i+".png' onclick='insertImageAtCursor("+i+")'></img>"
+        	}
+        	document.getElementById("emojigrid").innerHTML = totalstr;
+        </script>
+        <style>
+            .emoji-grid {
+		      width: 100%;
+		      overflow-y: scroll;
+		      display: flex;
+		      flex-wrap: wrap;
+		      gap: 4px;
+		    }
+		    
+		    .emoji-item {
+		      width: 24px;
+		      height: 24px;
+		      margin: 2px;
+		    }
+  		</style>
+        <input type="button" value="发送" id="sendbtn" onclick="sendMsg()" style="position:absolute;right: 16px;bottom: 16px;">
+        <script>
+        ipcRenderer.on('selected-img', (event, filePath) => {
+            let randomPackageId = genPackageId();
+            if (!filePath) { return; }
+            try {
+                let filebuffer = fs.readFileSync(filePath);
+                putTemporaryStorage(randomPackageId, filebuffer, () => {
+                    const sharp = require('sharp')
+                    sharp(filebuffer)
+                        .resize({ width: 100 }) // 设置缩略图宽度为 200 像素，等比例缩放
+                        .jpeg() // 转换为 JPEG 格式
+                        .toBuffer({ resolveWithObject: true })
+                        .then(result => {
+                            putTemporaryStorage("Thumbnail_" + randomPackageId, result.data, () => {
+                                if (!alldatas.type2) {
+                                    sendMsgTo("*_" + alldatas.guid + "_*", "*_" + alldatas.guid + "_*", "CHAT PICTURE=" + randomPackageId + ",THUMBNAILSIZE=100x" + result.info.height + ",THUMBNAILURL=Thumbnail_" + randomPackageId + ",THUMBNAIL=" + result.data.toString('base64') + ";fields=realname=" + getGlobalUsrname() + ";userclassname=;", () => { render_msgIm("*_" + alldatas.guid + "_*") })
+                                } else {
+                                    sendMsgTo(getGlobalPackageId(), getPackageId(alldatas.useraccount), "CHAT PICTURE=" + randomPackageId + ",THUMBNAILSIZE=100x" + result.info.height + ",THUMBNAILURL=Thumbnail_" + randomPackageId + ",THUMBNAIL=" + result.data.toString('base64') + ";fields=realname=" + getGlobalUsrname() + ";userclassname=;", () => { render_msg(getPackageId(alldatas.useraccount)) })
+                                }
+                            });
+                        });
+                })
+            } catch (err) {
+                electron.ipcRenderer.sendToHost("alert", "提示", "图片上传失败", "确定")
+            }
+        });
 
-		spanElement.onfocus = function() {
-			console.log("focused")
-			if (spanElement.innerHTML.trim() == "<span style=\"color: grey;word-break: break-all;\">输入发送的消息（Enter）</span>") {
-				spanElement.innerHTML = ""
-			}
-		}
+        ipcRenderer.on('selected-voice', (event, filePath) => {
+            let randomPackageId = genPackageIdMusic();
+            if (!filePath) { return; }
+            try {
+                let filebuffer = fs.readFileSync(filePath);
+                putTemporaryStorage(randomPackageId, filebuffer, () => {
+                    const fileName = path.basename(filePath, path.extname(filePath)); // 获取文件名（去除扩展名）
+                    if (!alldatas.type2) {
+                        sendMsgTo("*_" + alldatas.guid + "_*", "*_" + alldatas.guid + "_*", "CHAT VOICE=" + randomPackageId + ",TIME=0" + fileName + ";fields=realname=" + getGlobalUsrname() + ";userclassname=;", () => { render_msgIm("*_" + alldatas.guid + "_*") })
+                    } else {
+                        sendMsgTo(getGlobalPackageId(), getPackageId(alldatas.useraccount), "CHAT VOICE=" + randomPackageId + ",TIME=0" + fileName + ";fields=realname=" + getGlobalUsrname() + ";userclassname=;", () => { render_msg(getPackageId(alldatas.useraccount)) })
+                    }
+                })
+            } catch (err) {
+                electron.ipcRenderer.sendToHost("alert", "提示", "图片上传失败", "确定")
+            }
+        });
+        // 在光标位置插入<img>标签
+        function insertImageAtCursor(imageNo) {
+            // 获取当前选区
+            var selection = document.getSelection();
+            if (spanElement.innerHTML.trim() == "<span style=\"color: grey;word-break: break-all;\">输入发送的消息（Enter）</span>") {
+                spanElement.innerHTML = ""
+            }
+
+            // 创建一个新的<img>元素
+            var imgElement = document.createElement('img');
+            imgElement.src = "src/smiley/smiley_" + imageNo + ".png";
+            imgElement.style = "width:24px;vertical-align:middle"
+
+            // 创建一个新的 Range 对象，表示插入的位置
 
 
-		spanElement.onblur = function() {
-			console.log("focused")
-			if (spanElement.innerHTML.trim() == "") {
-				spanElement.innerHTML = "<span style=\"color: grey;word-break: break-all;\">输入发送的消息（Enter）</span>"
-			}
-		}
-		spanElement.onkeydown = function(event) {
-			if (event.keyCode === 13 && !event.shiftKey) {
-				sendMsg();
-				event.preventDefault();
-			}
-		};
+            if (selection.rangeCount === 0) {
+                document.getElementById("iparea").appendChild(imgElement)
+            } else {
+                var range = selection.getRangeAt(0).cloneRange();
+                range.deleteContents();
+
+                // 将<img>元素插入到 Range 对象的起始位置
+                range.insertNode(imgElement);
+
+                // 重新设置选区，将光标放在插入的<img>元素后面
+                range.setStartAfter(imgElement);
+                range.collapse(true);
+
+                // 清空现有选区并设置新的选区
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+
+        }
+
+        // function processBold() {
+        //     // 获取可编辑div元素
+        //     var editableDiv = document.getElementById("iparea");
+
+        //     // 获取选中的区域
+        //     var selection = window.getSelection();
+        //     var range = selection.getRangeAt(0);
+
+        //     // 创建<b>标签
+        //     var boldElement = document.createElement("b");
+
+        //     // 将选中的文字包裹在<b>标签内
+        //     boldElement.appendChild(range.extractContents());
+        //     range.insertNode(boldElement);
+        // }
+
+        // function isTextBold() {
+        //     var selectedText = window.getSelection().toString();
+        //     var tempElement = document.createElement('b');
+        //     tempElement.innerHTML = selectedText;
+
+        //     return (tempElement.style.fontWeight === 'bold');
+        // }
+        </script>
+        <script>
+        var spanElement = document.getElementById("iparea");
+
+        spanElement.onfocus = function() {
+            // console.log("focused")
+            if (spanElement.innerHTML.trim() == "<span style=\"color: grey;word-break: break-all;\">输入发送的消息（Enter）</span>") {
+                spanElement.innerHTML = ""
+            }
+        }
 
 
-		function encodeToUnicode(text) {
-			var encodedText = '';
+        spanElement.onblur = function() {
+            // console.log("focused")
+            if (spanElement.innerHTML.trim() == "") {
+                spanElement.innerHTML = "<span style=\"color: grey;word-break: break-all;\">输入发送的消息（Enter）</span>"
+            }
+        }
+        spanElement.onkeydown = function(event) {
+            if (event.keyCode === 13 && !event.shiftKey) {
+                sendMsg();
+                event.preventDefault();
+            }
+        };
 
-			for (var i = 0; i < text.length; i++) {
-				encodedText += '&#' + text.charCodeAt(i) + ';';
-			}
 
-			return encodedText.replaceAll("&#60;&#98;&#114;&#62;", "<br>\n");
-		}
+        function encodeToUnicode(text) {
+            var encodedText = '';
 
-		function adaptImgToSrc(str) {
-			return str.replaceAll("<img src=\"", "<img style=\"width:24px;vertical-align:middle\" src=\"src/smiley/smiley_").replaceAll("\">", ".png\">").replaceAll("<font/>", "</font>").replaceAll("<em/>", "</em>").replaceAll("<big/>", "</big>").replaceAll("<b/>", "</b>")
-		}
+            for (var i = 0; i < text.length; i++) {
+                if (isNaN(text[i])) {
+                    encodedText += '&#' + text.charCodeAt(i) + ';';
+                } else {
+                    encodedText += text[i];
+                }
+            }
+
+            return encodedText.replaceAll("&#60;&#98;&#114;&#62;", "<br>\n");
+        }
+
+        function adaptImgToSrc(str) {
+            return str.replaceAll("<img src=\"", "<img style=\"width:24px;vertical-align:middle\" src=\"src/smiley/smiley_").replaceAll("\">", ".png\">").replaceAll("<font/>", "</font>").replaceAll("<em/>", "</em>").replaceAll("<big/>", "</big>").replaceAll("<b/>", "</b>")
+        }
 
 
-		function sendMsg() {
-			if (document.getElementById("iparea").innerHTML.trim() == "") { return; }
-			let message = document.getElementById("iparea").innerHTML;
-			document.getElementById("iparea").innerHTML = "";
-			if (!alldatas.type2) {
-				sendMsgTo("*_" + alldatas.guid + "_*", "*_" + alldatas.guid + "_*", "CHAT " + encodeToUnicode(message) + "\nfields=realname=" + getGlobalUsrname() + ";userclassname=;", () => { render_msgIm("*_" + alldatas.guid + "_*") })
-			} else {
-				sendMsgTo(getGlobalPackageId(), getPackageId(1, alldatas.useraccount), "CHAT " + encodeToUnicode(message) + "\nfields=realname=" + getGlobalUsrname() + ";", () => { render_msg(getPackageId(1, alldatas.useraccount)) })
-			}
+        function sendMsg() {
+        	document.getElementById('emojipanel').style.display='none'
+            if (document.getElementById("iparea").innerHTML.trim() == "") { return; }
+            let message = document.getElementById("iparea").innerHTML;
+            let encodedMsg = encodeToUnicode(message).replaceAll('&#60;&#105;&#109;&#103; &#115;&#114;&#99;&#61;&#34;&#115;&#114;&#99;&#47;&#115;&#109;&#105;&#108;&#101;&#121;&#47;&#115;&#109;&#105;&#108;&#101;&#121;&#95;', `<img src="`).replaceAll('&#46;&#112;&#110;&#103;&#34; &#115;&#116;&#121;&#108;&#101;&#61;&#34;&#119;&#105;&#100;&#116;&#104;&#58; 24&#112;&#120;&#59; &#118;&#101;&#114;&#116;&#105;&#99;&#97;&#108;&#45;&#97;&#108;&#105;&#103;&#110;&#58; &#109;&#105;&#100;&#100;&#108;&#101;&#59;&#34;&#62;', '">')
+            document.getElementById("iparea").innerHTML = "";
+            if (!alldatas.type2) {
+                sendMsgTo("*_" + alldatas.guid + "_*", "*_" + alldatas.guid + "_*", "CHAT " + encodedMsg + "\nfields=realname=" + getGlobalUsrname() + ";userclassname=;", () => { render_msgIm("*_" + alldatas.guid + "_*") })
+            } else {
+                sendMsgTo(getGlobalPackageId(), getPackageId(alldatas.useraccount), "CHAT " + encodedMsg + "\nfields=realname=" + getGlobalUsrname() + ";", () => { render_msg(getPackageId(alldatas.useraccount)) })
+            }
 
-		}
+        }
 
-		function sendMsgTo(from, to, content, callback) {
-			let rdguid = getRandomGUID();
-			simpleRequest("https://" + getGlobalServerAddr() + "/SendResponse?sessionid=" + getGlobalSessionId() + "&clientid=" + to + "&guid=" + rdguid + "&from=" + from + "&expire=0", JSON.stringify({ guid: rdguid, expire: "0", content: content, from: from }), [], callback, () => { electron.ipcRenderer.sendToHost("提示", "消息发送失败", "确定") }, 1000)
-		}
+        function sendMsgTo(from, to, content, callback) {
+            let rdguid = getRandomGUID();
+            simpleRequest("https://" + getGlobalServerAddr() + "/SendResponse?sessionid=" + getGlobalSessionId() + "&clientid=" + to + "&guid=" + rdguid + "&from=" + from + "&expire=0", JSON.stringify({ guid: rdguid, expire: "0", content: content, from: from }), [], callback, () => { electron.ipcRenderer.sendToHost("提示", "消息发送失败", "确定") }, 1000)
+        }
 
-		function model_bubbleright(realname, msgcont, useravatar) {
-			return `
+        function model_bubbleright(realname, msgcont, useravatar) {
+            return `
 			<div class="bubbleright">
 				<div style="display: inline-block;vertical-align: bottom;width: calc(100% - 80px)">
 					<span style="font-size: 11px;">${realname}</span><br>
 					<div class="msg" style="background-color: #aea;text-align: left;padding: 8px;top: 4px;position: relative;border-radius: 6px;max-width: 100%;display: inline-block;word-break: break-all;user-select:text">${msgcont}</div>
 				</div><img src="${useravatar}" onerror="this.src='src/no_pic.jpg'" style="height:30px;width:30px;margin: 4px;vertical-align:top;">
 			</div>`
-		}
+        }
 
-		function model_bubbleleft(realname, msgcont, useravatar) {
-			return `
+        function model_bubbleleft(realname, msgcont, useravatar) {
+            return `
 			<div class="bubbleleft"><img src="${useravatar}" onerror="this.src='src/no_pic.jpg'" style="height:30px;width:30px;margin: 4px;vertical-align:top;">
 				<div style="display: inline-block;vertical-align: bottom;width: calc(100% - 80px)">
 					<span style="font-size: 11px;">${realname}</span><br>
 					<div class="msg" style="background-color: #fff;padding: 8px;top: 4px;position: relative;border-radius: 6px;word-break: break-all;max-width: 100%;display: inline-block;user-select:text">${msgcont}</div>
 				</div>
 			</div>`
-		}
+        }
 
-		function getMsgFrom(lpszFromClientID, callback) {
-			simpleRequest(`https://${getGlobalServerAddr()}/restful/IMResendHistoryMessage?lpszFromClientID=${lpszFromClientID}&lpszToClientID=${getGlobalPackageId()}&nCount=999999&nFrom=0`, "", [], (retval) => { callback(JSON.parse(JSON.parse(retval).szJsonResult)) }, () => { electron.ipcRenderer.sendToHost("alert", "提示", "获取消息失败，请重试", "确定") }, 10000, true)
-		}
-
-
-		function render_msg(clientid) {
-			getMsgFrom(clientid, (retval) => {
-				if (!retval) {
-					electron.ipcRenderer.sendToHost("loadok");
-				}
-				let allstrs = ""
-				let allmsgs = retval.reverse();
-				console.log(allmsgs)
-				for (var i = 0; i < allmsgs.length; i++) {
-					let cont = "";
-					if (JSON.parse(allmsgs[i].text).content.indexOf("PICTURE=") == 5) {
-						// This is a picture or drawpad.
-						console.log(JSON.parse(allmsgs[i].text).content.substring(13).split(",")[0])
-						cont = `<img src="https://${getGlobalServerAddr()}/GetTemporaryStorage?filename=${JSON.parse(allmsgs[i].text).content.substring(13).split(",")[0]}" style="max-width:200px;max-height:100px;cursor:zoom-in;height:120px;" onclick="openLargeImg(this.src)" onload="this.style.height='auto'">`
-					} else {
-						cont = adaptImgToSrc(JSON.parse(allmsgs[i].text).content.substr(5, JSON.parse(allmsgs[i].text).content.indexOf('\nfields') - 5))
-					}
-					if (allmsgs[i].from == getGlobalPackageId()) {
-						allstrs += model_bubbleright(getGlobalUsrname(), cont, `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${getGlobalPackageId()}&packageid=UserAvatar_${globalAccountFile.account}`);
-					} else {
-						allstrs += model_bubbleleft(alldatas.username, cont, `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${clientid}&packageid=UserAvatar_${clientid.match(/\d+/g)}`);
-					}
-				}
-				document.getElementById('chatarea').innerHTML = allstrs;
-				setTimeout(() => {
-					document.getElementById('chatarea').scrollTop = chatarea.scrollHeight;
-					document.getElementById('chatarea').style.visibility = "visible";
-					electron.ipcRenderer.sendToHost("loadok");
-				}, 100)
-			})
-		}
-
-		function openLargeImg(url) {
-			fs.writeFile(getuserdatapath() + '/tempimg', url, () => {
-				electron.ipcRenderer.sendToHost('openLargeImg');
-			});
-		}
+        function getMsgFrom(lpszFromClientID, callback) {
+            simpleRequest(`https://${getGlobalServerAddr()}/restful/IMResendHistoryMessage?lpszFromClientID=${lpszFromClientID}&lpszToClientID=${getGlobalPackageId()}&nCount=999999&nFrom=0`, "", [], (retval) => { callback(JSON.parse(JSON.parse(retval).szJsonResult)) }, () => { electron.ipcRenderer.sendToHost("alert", "提示", "获取消息失败，请重试", "确定") }, 10000, true)
+        }
 
 
-		function render_msgIm(clientid) {
-			getMsgFrom(clientid, (retval) => {
-				if (!retval) {
-					electron.ipcRenderer.sendToHost("loadok");
-				}
-				let allstrs = ""
-				let allmsgs = retval.reverse();
-				console.log(allmsgs)
-				for (var i = 0; i < allmsgs.length; i++) {
-					let cont = "";
-					if (JSON.parse(allmsgs[i].text).content.indexOf("PICTURE=") == 5) {
-						// This is a picture or drawpad.
-						console.log(JSON.parse(allmsgs[i].text).content.substring(13).split(",")[0])
-						cont = `<img src="https://${getGlobalServerAddr()}/GetTemporaryStorage?filename=${JSON.parse(allmsgs[i].text).content.substring(13).split(",")[0]}" style="max-width:200px;max-height:100px;cursor:zoom-in;height:120px;" onclick="openLargeImg(this.src)" onload="this.style.height='auto'">`
-					} else {
-						cont = adaptImgToSrc(JSON.parse(allmsgs[i].text).content.substr(5, JSON.parse(allmsgs[i].text).content.indexOf('\nfields') - 5))
-					}
-					if (extractText(JSON.parse(allmsgs[i].text).content) == getGlobalUsrname()) {
-						allstrs += model_bubbleright(getGlobalUsrname(), cont, `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${getGlobalPackageId()}&packageid=UserAvatar_${globalAccountFile.account}`);
-					} else {
-						allstrs += model_bubbleleft(extractText(JSON.parse(allmsgs[i].text).content), cont, `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${clientid}&packageid=UserAvatar_${clientid.match(/\d+/g)}`);
-					}
-				}
-				document.getElementById('chatarea').innerHTML = allstrs;
-				setTimeout(() => {
-					document.getElementById('chatarea').scrollTop = chatarea.scrollHeight;
-					document.getElementById('chatarea').style.visibility = "visible";
-					electron.ipcRenderer.sendToHost("loadok");
-				}, 100)
-			})
-		}
+        function render_msg(clientid) {
+            getMsgFrom(clientid, (retval) => {
+                if (!retval) {
+                    electron.ipcRenderer.sendToHost("loadok");
+                }
+                let allstrs = ""
+                let allmsgs = retval.reverse();
+                console.log(allmsgs)
+                for (var i = 0; i < allmsgs.length; i++) {
+                    let cont = "";
+                    if (JSON.parse(allmsgs[i].text).content.indexOf("PICTURE=") == 5) {
+                        // This is a picture or drawpad.
+                        console.log(JSON.parse(allmsgs[i].text).content.substring(13).split(",")[0])
+                        cont = `<img src="https://${getGlobalServerAddr()}/GetTemporaryStorage?filename=${JSON.parse(allmsgs[i].text).content.substring(13).split(",")[0]}" style="max-width:200px;max-height:100px;cursor:zoom-in;height:120px;" onclick="openLargeImg(this.src)" onload="this.style.height='auto'">`
+                    } else if (JSON.parse(allmsgs[i].text).content.indexOf("INTENT=#Intent;") == 5) {
+                        // This is a resource file.
+                        const regex1 = /S\.resourceguid=([^;]+)/;
+                        const match1 = JSON.parse(allmsgs[i].text).content.match(regex1);
+                        const regex2 = /S\.title=([^;]+)/;
+                        const match2 = JSON.parse(allmsgs[i].text).content.match(regex2);
+                        // console.log(match1[1],decodeURIComponent(match2[1]))
+                        cont = `<input type="button" value="${decodeURIComponent(match2[1])}" onclick="openResource('${match1[1]}')">`
+                    } else if (JSON.parse(allmsgs[i].text).content.indexOf("INTENT=ENC:") == 5) {
+                        // This is a link.
+                        const regex = /ENC:([^;]+)/;
+                        const match = JSON.parse(allmsgs[i].text).content.match(regex);
+                        let itstr = (parseEncodedIntent(match[1]));
 
-		function extractText(str) {
-			var startIndex = str.indexOf("realname=") + 9;
-			var endIndex = str.indexOf(";", startIndex);
+                        const titleMatch = decodeURIComponent(itstr.match(/S\.title=([^;]+)/)[1]);
+                        const urlMatch = decodeURIComponent(itstr.match(/S\.url=([^;]+)/)[1]);
 
-			if (startIndex !== -1 && endIndex !== -1) {
-				return str.substring(startIndex, endIndex);
-			} else {
-				return ""; // 返回空字符串表示未找到匹配内容
-			}
-		}
-		</script>
-	</div>
-	</div>
+
+                        cont = `<input type="button" value="${titleMatch}" onclick="electron.shell.openExternal('https://${getGlobalServerAddr()}/GetTemporaryStorage?filename=${urlMatch}')">`
+                    } else if (JSON.parse(allmsgs[i].text).content.indexOf("VOICE=") == 5) {
+                        // This is an audio.
+                        const regex = /VOICE=([^,]+)/;
+                        const match = JSON.parse(allmsgs[i].text).content.match(regex);
+                        let itstr = match[1];
+
+                        loadAudio(`https://${getGlobalServerAddr()}/GetTemporaryStorage?filename=${itstr}`, `audio_${itstr.split(".")[0]}`)
+
+                        cont = `<audio id="audio_${itstr.split(".")[0]}" controls style="width: 266px;vertical-align: middle;height: 30px;">`
+                    } else {
+                        cont = adaptImgToSrc(JSON.parse(allmsgs[i].text).content.substr(5, JSON.parse(allmsgs[i].text).content.indexOf('\nfields') - 5))
+                    }
+                    if (allmsgs[i].from == getGlobalPackageId()) {
+                        allstrs += model_bubbleright(getGlobalUsrname(), cont, `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${getGlobalPackageId()}&packageid=UserAvatar_${globalAccountFile.account}`);
+                    } else {
+                        allstrs += model_bubbleleft(alldatas.username, cont, `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${clientid}&packageid=UserAvatar_${clientid.match(/\d+/g)}`);
+                    }
+                }
+                document.getElementById('chatarea').innerHTML = allstrs;
+                setTimeout(() => {
+                    document.getElementById('chatarea').scrollTop = chatarea.scrollHeight;
+                    document.getElementById('chatarea').style.visibility = "visible";
+                    electron.ipcRenderer.sendToHost("loadok");
+                }, 100)
+            })
+        }
+
+        function openLargeImg(url) {
+            fs.writeFile(getuserdatapath() + '/tempimg', url, () => {
+                electron.ipcRenderer.sendToHost('openLargeImg');
+            });
+        }
+
+        function decodeEnc(enc) {
+            electron.shell.openExternal(parseEncodedIntent(enc))
+        }
+
+        function openResource(guid) {
+            ipcRenderer.sendToHost('salert', '请稍等')
+            getResourceByGUID(guid, (cbv) => {
+                ipcRenderer.sendToHost('dismisssalert');
+                try {
+                    electron.ipcRenderer.sendToHost('loaddata', cbv.RESOURCE.CONTENT["@attributes"].fileuri, 'open', '', true)
+                } catch {}
+                try {
+                    //cbv.RESOURCE.SUMMERY.CONTENT["@attributes"].fileuri
+                    electron.ipcRenderer.sendToHost('loaddata', cbv.RESOURCE.SUMMERY.CONTENT["@attributes"].fileuri, 'open', '', true)
+                } catch {}
+            })
+        }
+
+
+        function render_msgIm(clientid) {
+            getMsgFrom(clientid, (retval) => {
+                if (!retval) {
+                    electron.ipcRenderer.sendToHost("loadok");
+                }
+                let allstrs = ""
+                let allmsgs = retval.reverse();
+                console.log(allmsgs)
+                for (var i = 0; i < allmsgs.length; i++) {
+                    let cont = "";
+                    if (JSON.parse(allmsgs[i].text).content.indexOf("PICTURE=") == 5) {
+                        // This is a picture or drawpad.
+                        console.log(JSON.parse(allmsgs[i].text).content.substring(13).split(",")[0])
+                        cont = `<img src="https://${getGlobalServerAddr()}/GetTemporaryStorage?filename=${JSON.parse(allmsgs[i].text).content.substring(13).split(",")[0]}" style="max-width:200px;max-height:100px;cursor:zoom-in;height:120px;" onclick="openLargeImg(this.src)" onload="this.style.height='auto'">`
+                    } else if (JSON.parse(allmsgs[i].text).content.indexOf("INTENT=#Intent;") == 5) {
+                        // This is a resource file.
+                        const regex1 = /S\.resourceguid=([^;]+)/;
+                        const match1 = JSON.parse(allmsgs[i].text).content.match(regex1);
+                        const regex2 = /S\.title=([^;]+)/;
+                        const match2 = JSON.parse(allmsgs[i].text).content.match(regex2);
+                        // console.log(match1[1],decodeURIComponent(match2[1]))
+                        cont = `<input type="button" value="${decodeURIComponent(match2[1])}" onclick="openResource('${match1[1]}')">`
+                    } else if (JSON.parse(allmsgs[i].text).content.indexOf("INTENT=ENC:") == 5) {
+                        // This is a link.
+                        const regex = /ENC:([^;]+)/;
+                        const match = JSON.parse(allmsgs[i].text).content.match(regex);
+                        let itstr = (parseEncodedIntent(match[1]));
+
+                        const titleMatch = decodeURIComponent(itstr.match(/S\.title=([^;]+)/)[1]);
+                        const urlMatch = decodeURIComponent(itstr.match(/S\.url=([^;]+)/)[1]);
+
+
+                        cont = `<input type="button" value="${titleMatch}" onclick="electron.shell.openExternal('https://${getGlobalServerAddr()}/GetTemporaryStorage?filename=${urlMatch}')">`
+                    } else if (JSON.parse(allmsgs[i].text).content.indexOf("VOICE=") == 5) {
+                        // This is an audio.
+                        const regex = /VOICE=([^,]+)/;
+                        const match = JSON.parse(allmsgs[i].text).content.match(regex);
+                        let itstr = match[1];
+
+                        loadAudio(`https://${getGlobalServerAddr()}/GetTemporaryStorage?filename=${itstr}`, `audio_${itstr.split(".")[0]}`)
+
+                        cont = `<audio id="audio_${itstr.split(".")[0]}" controls style="width: 266px;vertical-align: middle;height: 30px;">`
+                    } else {
+                        cont = adaptImgToSrc(JSON.parse(allmsgs[i].text).content.substr(5, JSON.parse(allmsgs[i].text).content.indexOf('\nfields') - 5))
+                    }
+                    if (extractText(JSON.parse(allmsgs[i].text).content) == getGlobalUsrname()) {
+                        allstrs += model_bubbleright(getGlobalUsrname(), cont, `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${getGlobalPackageId()}&packageid=UserAvatar_${globalAccountFile.account}`);
+                    } else {
+                        allstrs += model_bubbleleft(extractText(JSON.parse(allmsgs[i].text).content), cont, `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${clientid}&packageid=UserAvatar_${clientid.match(/\d+/g)}`);
+                    }
+                }
+                document.getElementById('chatarea').innerHTML = allstrs;
+                setTimeout(() => {
+                    document.getElementById('chatarea').scrollTop = chatarea.scrollHeight;
+                    document.getElementById('chatarea').style.visibility = "visible";
+                    electron.ipcRenderer.sendToHost("loadok");
+                }, 100)
+            })
+        }
+
+        function extractText(str) {
+            var startIndex = str.indexOf("realname=") + 9;
+            var endIndex = str.indexOf(";", startIndex);
+
+            if (startIndex !== -1 && endIndex !== -1) {
+                return str.substring(startIndex, endIndex);
+            } else {
+                return ""; // 返回空字符串表示未找到匹配内容
+            }
+        }
+        </script>
+    </div>
+    </div>
 </body>
 
 </html>
