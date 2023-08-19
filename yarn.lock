@@ -1587,7 +1587,7 @@
   "resolved" "https://registry.npmjs.org/flushwritable/-/flushwritable-1.0.0.tgz"
   "version" "1.0.0"
 
-"follow-redirects@^1.15.0", "follow-redirects@^1.15.2":
+"follow-redirects@^1.15.0":
   "integrity" "sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA=="
   "resolved" "https://registry.npmjs.org/follow-redirects/-/follow-redirects-1.15.2.tgz"
   "version" "1.15.2"
@@ -2695,13 +2695,6 @@
     "semver" "^7.3.5"
     "tar" "^6.1.2"
     "which" "^2.0.2"
-
-"node-record-lpcm16@^1.0.1":
-  "integrity" "sha512-H75GMOP8ErnF67m21+qSgj4USnzv5RLfm7OkEItdIi+soNKoJZpMQPX6umM8Cn9nVPSgd/dBUtc1msst5MmABA=="
-  "resolved" "https://registry.npmjs.org/node-record-lpcm16/-/node-record-lpcm16-1.0.1.tgz"
-  "version" "1.0.1"
-  dependencies:
-    "debug" "^2.6.8"
 
 "node-wallpaper@^6.0.2":
   "integrity" "sha512-rVJLE+6aw7U9Xqv+9A+BYMarOC4KyfHdteiX4yS5hzhISRvO+JjHRMpDjK81CeLg+yataHUlKPnnccFU7iLXkw=="
