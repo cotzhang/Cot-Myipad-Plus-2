@@ -6,20 +6,7 @@
 	<link rel="stylesheet" href="panelistic3.0-electron.css">
 	<script src="panelistic3.0-electron.js"></script>
 	
-<script>
-
-fs = require('fs');
-	function isDev() {
-		return !fs.existsSync(process.cwd() + '/resources/app.asar');
-	}
-	let jssrc2 = "addition/func.js"
-	if (!isDev()) {
-		jssrc2="func.js"
-	}
-	document.write(`<script type="text/javascript" charset="UTF-8"
-        src="${jssrc2}">
-        </scr${''}ipt>`);
-</script>
+<script src="./func.js"></script>
 	<title>课堂实录</title>
 	<style type="text/css"></style>
 	<script type="text/javascript">

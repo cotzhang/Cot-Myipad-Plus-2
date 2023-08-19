@@ -1,4 +1,5 @@
 const $ = require('jquery');
+fs = require('fs')
 let xml2js;
 try {
     xml2js = require('xml2js');

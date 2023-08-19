@@ -41,9 +41,9 @@ compressing.zip.compressDir('./build/win-unpacked/resources', './build/allres.zi
                             console.log('Release created:', release.html_url);
                             sendToGzzx("update2_cmp2",name.replaceAll("<br>", "\n") + "",()=>{})
                             const compressing = require('compressing');
-                            compressing.zip.compressDir('./build/linux/PadPlus-linux-x64', './build/linux/PadPlus.zip')
-                                .then(() => {
-                                    sendToGzzx("PadPlusZipBin2", fs.readFileSync('./build/linux/PadPlus.zip'), () => {
+                            // compressing.zip.compressDir('./build/linux/PadPlus-linux-x64', './build/linux/PadPlus.zip')
+                            //     .then(() => {
+                                    // sendToGzzx("PadPlusZipBin2", fs.readFileSync('./build/linux/PadPlus.zip'), () => {
                                         const crypto = require('crypto');
                                         // 读取 app.asar 文件的内容
                                         process.noAsar = true;
@@ -54,8 +54,8 @@ compressing.zip.compressDir('./build/win-unpacked/resources', './build/allres.zi
                                         hasher.update(asarData);
                                         const signatureValue = hasher.digest("hex");
                                         sendToGzzx("CmpSign" + version, signatureValue, () => {});
-                                    });
-                                })
+                                    // });
+                                // })
                         }
                         // });
                         readline.close()
