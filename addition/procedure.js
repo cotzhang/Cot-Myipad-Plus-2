@@ -1650,10 +1650,11 @@ function openRyYunTo(site, atrl) {
 function initlogin(id, pwmd5, serverADDR, second) {
 	//Check other sessionid exists
 	if (fs.existsSync(getuserdatapath() + "/account2")) {
-		let account2 = JSON.parse(fs.existsSync(getuserdatapath() + "/account2"))
-		id = account2.id;
-		pwmd5 = account2.pwmd5;
+		let account2 = JSON.parse(fs.readFileSync(getuserdatapath() + "/account2"))
+		id = account2.account;
+		pwmd5 = account2.password;
 	}
+	console.log(id,pwmd5)
 	currdiag = panelistic.dialog.salert("正在登录");
 	let reqstr = `<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><UsersLoginJson xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><lpszUserName i:type="d:string">${id}</lpszUserName><lpszPasswordMD5 i:type="d:string">${pwmd5}</lpszPasswordMD5><lpszClientID i:type="d:string">myipad_</lpszClientID><lpszHardwareKey i:type="d:string">MODEL: BZT-W09
 WifiMac: 12:34:56:78:90:ab

@@ -1351,3 +1351,31 @@ function getAudioLength(buffer) {
     );
   });
 }
+
+function getConfigList() {
+    let initjsondata = {
+        startup: true,
+        tray: true,
+        newBkNotify: true,
+        hwCheckedNotify: true,
+        newBkNotify: true,
+        abortBtn:false
+    }
+    try {
+        initjsondata = JSON.parse(fs.readFileSync(getuserdatapath() + '/config'));
+    } catch {
+        fs.writeFileSync(getuserdatapath() + "/config",JSON.stringify(initjsondata));
+    }
+    return initjsondata;
+}
+
+function getConfigValue(key) {
+    let configlist = getConfigList();
+    return configlist[key];
+}
+
+function setConfigValue(key,value) {
+    let configlist = getConfigList();
+    configlist[key] = value;
+    fs.writeFileSync(getuserdatapath() + "/config",JSON.stringify(configlist));
+}
