@@ -76,7 +76,7 @@
 	function getDevState() {
 		getTemporaryStorageToGzzxSingle("cmp_android_userstate.html" + globalAccountFile.account, (result) => {
 			result = result.split(":")
-			console.log(result);
+			// console.log(result);
 			document.getElementById("havedevices").style.display="block";
 			document.getElementById("nodevicenotice").style.display="none";
 			document.getElementById("devname").innerText=result[0];

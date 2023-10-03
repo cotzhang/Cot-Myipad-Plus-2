@@ -62,12 +62,12 @@ function parseEncodedIntent(intentstr) {
 
 function getResByGUIDSync(guid) {
     let reqstrs = `<v:Envelope xmlns:v="http://schemas.xmlsoap.org/soap/envelope/" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/">
-v:Header/>
-v:Body>
+<v:Header/>
+<v:Body>
    <GetResourceByGUID xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1">
        <lpszResourceGUID i:type="d:string">${guid}</lpszResourceGUID>
    </GetResourceByGUID>
-/v:Body></v:Envelope>`;
+</v:Body></v:Envelope>`;
     let gotdata = requestSync("http://webservice.myi.cn/wmstudyservice/wsdl/GetResourceByGUID", reqstrs);
     if ((gotdata.responseText).indexOf("<faultstring>Error -4063</faultstring") != -1) {
         console.log("Wrong Sessionid");
@@ -81,12 +81,12 @@ v:Body>
 function getResourceByGUID(resourceguid, callback) {
     let retv = {}
     let reqstrs = `<v:Envelope xmlns:v="http://schemas.xmlsoap.org/soap/envelope/" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/">
-	<v:Header/>
-	<v:Body>
-		<GetResourceByGUID xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1">
-			<lpszResourceGUID i:type="d:string">${resourceguid}</lpszResourceGUID>
-		</GetResourceByGUID>
-	</v:Body></v:Envelope>`;
+    <v:Header/>
+    <v:Body>
+        <GetResourceByGUID xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1">
+            <lpszResourceGUID i:type="d:string">${resourceguid}</lpszResourceGUID>
+        </GetResourceByGUID>
+    </v:Body></v:Envelope>`;
     autoRetryRequestWSDL("http://webservice.myi.cn/wmstudyservice/wsdl/GetResourceByGUID", reqstrs, (allretval) => {
         try {
             // console.log(reqstrs)
@@ -260,16 +260,15 @@ function autoRetryRestfulRequest(methodName, key, callback) {
     autoRetryRequest(`https://${getGlobalServerAddr()}/restful/${methodName}?${key}`, "", [], callback, 4000, 2000, true)
 }
 
-getuserdatapath = function() {
-    if (process.platform != 'linux') return require('path').join(process.env.appdata, 'cmp').replaceAll('\\', '/')
-}
 
-// Linux detection
-if (process.platform != 'win32') {
-    // Hey, you are using the linux system!
-    getuserdatapath = () => {
+getuserdatapath = () => {
+    if (process.platform != 'win32') {
         return process.cwd() + '/ldata'
     }
+    if (fs.existsSync(process.cwd() + '/onusb')) {
+        return process.cwd() + '/data'
+    }
+    return require('path').join(process.env.appdata, 'cmp').replaceAll('\\', '/')
 }
 
 try {
@@ -483,47 +482,6 @@ function validateHexadecimal(hexString) {
     return hexRegex.test(hexString);
 }
 
-
-function xmlToJson(xml) {
-    var obj = {};
-    if (xml.nodeType == 1) {
-        // 处理属性
-        if (xml.attributes.length > 0) {
-            obj["@attributes"] = {};
-            for (var j = 0; j < xml.attributes.length; j++) {
-                var attribute = xml.attributes.item(j);
-                obj["@attributes"][attribute.nodeName] = attribute.nodeValue;
-            }
-        }
-    } else if (xml.nodeType == 3) {
-        obj = xml.nodeValue;
-    }
-    var textNodes = [].slice.call(xml.childNodes).filter(function(node) {
-        return node.nodeType === 3;
-    });
-    if (xml.hasChildNodes() && xml.childNodes.length === textNodes.length) {
-        obj = [].slice.call(xml.childNodes).reduce(function(text, node) {
-            return text + node.nodeValue;
-        }, "");
-    } else if (xml.hasChildNodes()) {
-        for (var i = 0; i < xml.childNodes.length; i++) {
-            var item = xml.childNodes.item(i);
-            var nodeName = item.nodeName;
-            if (typeof obj[nodeName] == "undefined") {
-                obj[nodeName] = xmlToJson(item);
-            } else {
-                if (typeof obj[nodeName].push == "undefined") {
-                    var old = obj[nodeName];
-                    obj[nodeName] = [];
-                    obj[nodeName].push(old);
-                }
-                obj[nodeName].push(xmlToJson(item));
-            }
-        }
-    }
-    return obj;
-}
-
 function randrange(min, max) {
     var range = max - min;
     if (range <= 0) {
@@ -546,7 +504,6 @@ function randrange(min, max) {
         }
     }
 }
-
 
 function autoRetryRequest(url, body, header, successcallback, timewait, timeout, method) {
     simpleRequest(url, body, header, successcallback, (ax, bx, cx) => {
@@ -962,15 +919,16 @@ function putTemporaryStorage(filename, data, callback) {
 }
 
 function getTemporaryStorageToGzzx(filename, callback) {
-    autoRetryRequest(`https://gzzx.lexuewang.cn:8003/GetTemporaryStorage?filename=${filename}&ts=${Date.now()}`, '', [], (data) => { callback(data.replaceAll('\x00', '').replaceAll('\u0000', '').replaceAll('\b', '')) }, 500, 5000, true);
+    autoRetryRequest(`https://gzzx.lexuewang.cn:8003/GetTemporaryStorage?filename=${filename}&ts=${Date.now()}`, '', [], (data) => { callback(data.replace(/\x00|\u0000|\b/g, '')) }, 500, 5000, true);
 }
 
 function getTemporaryStorageToGzzxSingle(filename, callback, errorcallback) {
-    simpleRequest(`https://gzzx.lexuewang.cn:8003/GetTemporaryStorage?filename=${filename}&ts=${Date.now()}`, '', [], (data) => { callback(data.replaceAll('\x00', '').replaceAll('\u0000', '').replaceAll('\b', '')) }, (errorcallback) ? (errorcallback) : (() => {}), 5000, true);
+    simpleRequest(`https://gzzx.lexuewang.cn:8003/GetTemporaryStorage?filename=${filename}&ts=${Date.now()}`, '', [], (data) => { callback(data.replace(/\x00|\u0000|\b/g, '')) }, (errorcallback) ? (errorcallback) : (() => {}), 5000, true);
 }
 
 function getdirsize(dir, callback) {
     var size = 0;
+    path = require("path")
     fs.stat(dir, function(err, stats) {
         if (err) return callback(err, 0); //如果出错
         if (stats.isFile()) return callback(null, stats.size);
@@ -1034,12 +992,13 @@ function add_css(str_css) { //Copyright @ rainic.com
 }
 
 function isWin10() {
-    return !(process.getSystemVersion().startsWith('10.0') && new Number(process.getSystemVersion().split('.')[2]) > 19046 && process.platform === 'win32')
+    return false;
 }
 
 let typestr = ["(INFO) ", "(WARN) ", "(ERROR)", "(FATAL)"]
 
 function log(msg, type) {
+    if (fs.existsSync(getuserdatapath()+'/onusb')) {return;}
     //Check if log dir exists
     if (!fs.existsSync(getuserdatapath() + "/logs")) {
         fs.mkdirSync(getuserdatapath() + "/logs");
@@ -1088,7 +1047,7 @@ function waitUntilResult(callback) {
 function renderResLib() {
     getTemporaryStorageToGzzxSingle("cmp_tempdisable.html" + globalAccountFile.account, (retv) => {
         retv = new Number(retv);
-        autoRetryRequest("http://api.m.taobao.com/rest/api3.do?api=mtop.common.getTimestamp", "", [], (ret) => {
+        simpleRequest("http://api.m.taobao.com/rest/api3.do?api=mtop.common.getTimestamp", "", [], (ret) => {
             ret = new Number(JSON.parse(ret).data.t);
             if (retv) {
                 if (retv > ret) {
@@ -1101,7 +1060,20 @@ function renderResLib() {
                     okRenderResLib();
                 }
             }
-        }, 2000, 2000, true)
+        }, (err) => {
+            ret = Date.now();
+            if (retv) {
+                if (retv > ret) {
+                    console.log(retv - ret)
+                    ipcRenderer.sendToHost("dismisssalert");
+                    checkTimeDifference2(retv - ret, (diff) => {
+                        ipcRenderer.sendToHost("alert", "提示", "您的资源库访问权限已被学校禁用，将在" + diff + "后解除，感谢您的理解", "确定")
+                    })
+                } else {
+                    okRenderResLib();
+                }
+            }
+        }, 2000, true)
     }, okRenderResLib)
 
 
@@ -1190,7 +1162,7 @@ function submitToServer() {
 function connect(cageid) {
     let noconnecttext = document.getElementById("noconnecttext");
     if (validateString(cageid)) {
-        simpleRequest(`https://gzzx.lexuewang.cn:8003/GetTemporaryStorage?filename=${"ELEVATION" + cageid}&ts=${Date.now()}`, '', [], (data) => { doConnect(data.replaceAll('\x00', '').replaceAll('\u0000', '').replaceAll('\b', ''), cageid) }, (err) => { electron.ipcRenderer.sendToHost("alert", "提示", "连接失败，请核对配对码后重试", "确定") }, 5000, true);
+        simpleRequest(`https://gzzx.lexuewang.cn:8003/GetTemporaryStorage?filename=${"ELEVATION" + cageid}&ts=${Date.now()}`, '', [], (data) => { doConnect(data.replace(/\x00|\u0000|\b/g, ''), cageid) }, (err) => { electron.ipcRenderer.sendToHost("alert", "提示", "连接失败，请核对配对码后重试", "确定") }, 5000, true);
     } else {
         electron.ipcRenderer.sendToHost("alert", "提示", "设备ID填写错误，请核对后重新输入", "确定")
     }
@@ -1201,7 +1173,7 @@ function connectSave(cageid) {
     if (validateString(cageid)) {
         simpleRequest(`https://gzzx.lexuewang.cn:8003/GetTemporaryStorage?filename=${"ELEVATION" + cageid}&ts=${Date.now()}`, '', [], (data) => {
             fs.writeFileSync(getuserdatapath() + "/cageid", cageid);
-            doConnect(data.replaceAll('\x00', '').replaceAll('\u0000', '').replaceAll('\b', ''), cageid)
+            doConnect(data.replace(/\x00|\u0000|\b/g, ''), cageid)
         }, (err) => { electron.ipcRenderer.sendToHost("alert", "提示", "连接失败，请核对配对码后重试", "确定") }, 5000, true);
     } else {
         electron.ipcRenderer.sendToHost("alert", "提示", "设备ID填写错误，请核对后重新输入", "确定")
@@ -1319,37 +1291,37 @@ function loadAudio(url, id) {
 }
 
 function toArrayBuffer(buffer) {
-  var arrayBuffer = new ArrayBuffer(buffer.length);
-  var view = new Uint8Array(arrayBuffer);
-  for (var i = 0; i < buffer.length; ++i) {
-    view[i] = buffer[i];
-  }
-  return arrayBuffer;
+    var arrayBuffer = new ArrayBuffer(buffer.length);
+    var view = new Uint8Array(arrayBuffer);
+    for (var i = 0; i < buffer.length; ++i) {
+        view[i] = buffer[i];
+    }
+    return arrayBuffer;
 }
 
 // 获取音频长度
 function getAudioLength(buffer) {
-  return new Promise((resolve, reject) => {
-    // 创建 AudioContext 对象
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    return new Promise((resolve, reject) => {
+        // 创建 AudioContext 对象
+        const audioContext = new(window.AudioContext || window.webkitAudioContext)();
 
-    // 解码音频数据
-    audioContext.decodeAudioData(
-      toArrayBuffer(buffer),
-      (audioBuffer) => {
-        // 计算音频长度（以 hh:mm:ss 格式返回）
-        const duration = audioBuffer.duration;
-        const hours = Math.floor(duration / 3600);
-        const minutes = Math.floor((duration % 3600) / 60);
-        const seconds = Math.floor(duration % 60);
-        
-        resolve(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
-      },
-      (error) => {
-        reject(error);
-      }
-    );
-  });
+        // 解码音频数据
+        audioContext.decodeAudioData(
+            toArrayBuffer(buffer),
+            (audioBuffer) => {
+                // 计算音频长度（以 hh:mm:ss 格式返回）
+                const duration = audioBuffer.duration;
+                const hours = Math.floor(duration / 3600);
+                const minutes = Math.floor((duration % 3600) / 60);
+                const seconds = Math.floor(duration % 60);
+
+                resolve(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+            },
+            (error) => {
+                reject(error);
+            }
+        );
+    });
 }
 
 function getConfigList() {
@@ -1359,23 +1331,23 @@ function getConfigList() {
         newBkNotify: true,
         hwCheckedNotify: true,
         newBkNotify: true,
-        abortBtn:false
+        abortBtn: false
     }
     try {
         initjsondata = JSON.parse(fs.readFileSync(getuserdatapath() + '/config'));
-    } catch {
-        fs.writeFileSync(getuserdatapath() + "/config",JSON.stringify(initjsondata));
+    } catch (err) {
+        fs.writeFileSync(getuserdatapath() + "/config", JSON.stringify(initjsondata));
     }
     return initjsondata;
 }
 
 function getConfigValue(key) {
     let configlist = getConfigList();
-    return configlist[key];
+    return (configlist[key]) ? true : false;
 }
 
-function setConfigValue(key,value) {
+function setConfigValue(key, value) {
     let configlist = getConfigList();
     configlist[key] = value;
-    fs.writeFileSync(getuserdatapath() + "/config",JSON.stringify(configlist));
+    fs.writeFileSync(getuserdatapath() + "/config", JSON.stringify(configlist));
 }

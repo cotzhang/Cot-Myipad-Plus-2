@@ -25,8 +25,6 @@
 		setCheckboxes()
 		document.getElementById('autorelease').innerText = JSON.parse(fs.readFileSync(__dirname + '/../package.json')).version;
 		// if (accndata.server != "gzzx.lexuewang.cn:8003" || fs.existsSync(getuserdatapath() + '/actived')) {
-		document.getElementById('actbtn').style.display = "none";
-		document.getElementById('acttoast').style.display = "block"
 		// }
 		fs.writeFileSync(getuserdatapath() + '/qrloginself.png', require('qr-image').imageSync(accndata.account + "@" + accndata.server));
 
@@ -39,6 +37,10 @@
 		}
 
 		renderQr()
+
+		if (globalDataFile.usertype == 2) {
+			document.getElementById("qrsection").style.width = "360px"
+		}
 	}
 
 	function delres() {
@@ -83,6 +85,7 @@
 		document.getElementById('newBkNotify').checked = jsd.newBkNotify
 		document.getElementById('hwCheckedNotify').checked = jsd.hwCheckedNotify
 		document.getElementById('newBkNotify').checked = jsd.newBkNotify
+		document.getElementById('abortBtn').checked = getConfigValue("abortBtn")
 	}
 
 	updateSettings = function() {
@@ -100,62 +103,25 @@
 	<div id="panelistic_content_sidebar_in" class="DM_fonttitlel">
 		<div class="panelistic_panel">
 			<div class="panelistic_panel_name">软件信息</div><br><span class="panelistic_placeholder_large"></span>
+			<img src="../icon.png" style="height:64px;display: inline-block;width: 64px;vertical-align: top;">
+			<span style="display:inline-block;    width: calc(100% - 75px);">
+				<span style="    font-weight: bold;
+    font-size: 20px;
+    margin-bottom: 3px;
+    display: block;">PadPlus 2</span>
+				<span style="    font-size: 13px;
+    margin-top: -4px;
+    display: block;
+    margin-bottom: -4px;">版本 V<span id="autorelease"></span></span>
+				<span style="font-size: 13px;">Made by CotZhang with ❤️</span><br>
+			</span>
 			<span class="panelistic_placeholder"></span>
-			<img src="../snpicon.png" style="height:64px">
+			<div style="font-size: 13px;color: grey;" class="panelistic_panel">睿易少年派平板桌面客户端，支持导出课件、题目作答、错题本查看导出、文件上传、观看课堂实录、在线答疑等功能，帮助学生利用平板更高效率学习</div>
 			<span class="panelistic_placeholder"></span>
-			<span style="font-weight: bold;font-size: 15px;">平板+ PadPlus</span><br>
-			<span style="font-size: 14px;">版本 V<span id="autorelease"></span></span><br>
-			<span style="font-size: 14px;">开发 小喵COT</span><br>
-			<span style="color: darkgreen;font-weight: bold;display: none;font-size: 14px;" id="acttoast">当前软件已经激活</span>
-			<a style="font-size: 14px;cursor: pointer;color: blue;text-decoration: underline;" onclick="electron.shell.openExternal('https://www.apache.org/licenses/LICENSE-2.0.txt')">开放源代码软件 Under Apache Licence</a>
-		</div>
-		<span class="panelistic_placeholder"></span>
-		<div class="panelistic_panel">
-			<div class="panelistic_panel_name">程序设置</div><br><span class="panelistic_placeholder_large"></span>
-			<span style="font-size: 14px">部分更改需要重新打开程序后生效</span><span class="panelistic_placeholder"></span>
-			<div class="panelistic_checkbox"><input type="checkbox" onchange="updateSettings()" id="startup"><span class="panelistic_checkbox_text">开机自动启动</span></div>
-			<span class="panelistic_placeholder"></span>
-			<div class="panelistic_checkbox"><input type="checkbox" onchange="updateSettings()" id="tray"><span class="panelistic_checkbox_text">系统托盘运行</span></div>
-		</div>
-		<span class="panelistic_placeholder"></span>
-		<div class="panelistic_panel">
-			<div class="panelistic_panel_name">通知设置</div><br><span class="panelistic_placeholder_large"></span>
-			<div class="panelistic_checkbox"><input type="checkbox" onchange="updateSettings()" id="newBkNotify"><span class="panelistic_checkbox_text">新备课通知</span></div>
-			<span class="panelistic_placeholder"></span>
-			<div class="panelistic_checkbox"><input type="checkbox" onchange="updateSettings()" id="hwCheckedNotify"><span class="panelistic_checkbox_text">作业批改通知</span></div>
-			<!--span class="panelistic_placeholder"></span>
-			<div class="panelistic_checkbox"><input type="checkbox" onchange="updateSettings()"><span class="panelistic_checkbox_text">在线答疑通知</span></div-->
-		</div>
-		<span class="panelistic_placeholder"></span>
-		<div class="panelistic_panel">
-			<div class="panelistic_panel_name">修复资源</div><br><span class="panelistic_placeholder_large"></span>
-			<div style="font-size:14px" class="panelistic_panel">
-				修复资源可以解决部分资源丢失、无法显示的问题。</div><span class="panelistic_placeholder"></span>
-			<input type="button" value="修复资源" onclick="delres()">
-		</div>
-		<span class="panelistic_placeholder"></span>
-		<div class="panelistic_panel">
-			<div class="panelistic_panel_name">账号管理</div><br><span class="panelistic_placeholder_large"></span>
-			<input type="button" value="激活软件" onclick="electron.ipcRenderer.sendToHost('activewin')" id="actbtn">
-			<input type="button" value="重新登录" onclick="electron.ipcRenderer.sendToHost('relogin',accndata.account,accndata.password)">
-			<input type="button" value="退出账号" onclick="electron.ipcRenderer.sendToHost('exitaccount')" name="">
-		</div>
-		<span class="panelistic_placeholder"></span>
-		<div class="panelistic_panel">
-			<div class="panelistic_panel_name">双账号模式</div><br><span class="panelistic_placeholder_large"></span>
-			<div style="font-size:14px" class="panelistic_panel">
-				添加一个辅助账号用于获取 sessionid，避免平板被下线</div>
-			<span class="panelistic_placeholder"></span>
-			<div id="doubleaccount1">
-				<input type="text" placeholder="睿易账号" id="accountidtxt"> <input type="button" value="登录" onclick="electron.ipcRenderer.sendToHost('logintosecondaccn',document.getElementById('accountidtxt').value)"></div>
-			<div id="doubleaccount2"><input type="button" value="删除辅助账号" onclick="fs.unlinkSync(getuserdatapath()+'/account2');electron.ipcRenderer.sendToHost('relogin')"></div>
-		</div>
-		<span class="panelistic_placeholder"></span>
-		<div class="panelistic_panel">
-			<div class="panelistic_panel_name">登录二维码</div><br><span class="panelistic_placeholder_large"></span>
-			<div class="panelistic_panel" style="background-color:#fff;padding: 4px;width: 330px;"><img src="" id="qrlogin" style="vertical-align:middle;height: 80px;width: 80px;">
-				<div style="display:inline-block;vertical-align: middle;font-size: 14px;line-height: 26px;" id="accnnametab"></div>
-			</div>
+			<input type="button" value="访问官网" onclick="electron.shell.openExternal('https://cotzhang.cn')" name=""> 
+			<input type="button" value="少年派网页版" onclick="electron.shell.openExternal('https://cotzhang.cn/myipadweb')" name=""> 
+			<input type="button" value="意见反馈" onclick="electron.shell.openExternal('https://github.com/cotzhang/app.Cot-Myipad-Plus/issues')" name=""> 
+			<input type="button" value="打开日志文件夹" onclick='require("child_process").exec(`start %appdata%/cmp/logs`);electron.ipcRenderer.sendToHost("alert","日志文件夹","若在使用软件时遇到问题，请将该文件夹打包发送至开发者排查问题。","确定")' name=""> 
 		</div>
 		<span class="panelistic_placeholder"></span>
 		<div class="panelistic_panel">
@@ -179,11 +145,66 @@
 		</div>
 		<span class="panelistic_placeholder"></span>
 		<div class="panelistic_panel">
-			<div class="panelistic_panel_name">更多操作</div><br><span class="panelistic_placeholder_large"></span>
+			<div class="panelistic_panel_name">登录二维码</div><br><span class="panelistic_placeholder_large"></span>
+			<div class="panelistic_panel" id="qrsection" style="background-color:#fff;padding: 4px;width: 330px;"><img src="" id="qrlogin" style="vertical-align:middle;height: 80px;width: 80px;">
+				<div style="display:inline-block;vertical-align: middle;font-size: 14px;line-height: 26px;" id="accnnametab"></div>
+			</div>
+		</div>
+		<span class="panelistic_placeholder"></span>
+		<div class="panelistic_panel">
+			<div class="panelistic_panel_name">程序设置</div><br><span class="panelistic_placeholder_large"></span>
+			<div class="panelistic_checkbox"><input type="checkbox" onchange="setConfigValue('abortBtn',(this.checked)?true:false)" id="abortBtn"><span class="panelistic_checkbox_text">显示加载对话框中止按钮</span></div>
+			<span class="panelistic_placeholder"></span>
+			<div style="font-size: 14px">以下更改需要重新启动程序后生效：</div><span class="panelistic_placeholder"></span>
+			<div class="panelistic_checkbox"><input type="checkbox" onchange="updateSettings()" id="startup"><span class="panelistic_checkbox_text">开机自动启动</span></div>
+			<span class="panelistic_placeholder"></span>
+			<div class="panelistic_checkbox"><input type="checkbox" onchange="updateSettings()" id="tray"><span class="panelistic_checkbox_text">系统托盘运行</span></div>
+		</div>
+		<span class="panelistic_placeholder"></span>
+		<div class="panelistic_panel">
+			<div class="panelistic_panel_name">通知设置</div><br><span class="panelistic_placeholder_large"></span>
+			<div class="panelistic_checkbox"><input type="checkbox" onchange="updateSettings()" id="newBkNotify"><span class="panelistic_checkbox_text">新备课通知</span></div>
+			<span class="panelistic_placeholder"></span>
+			<div class="panelistic_checkbox"><input type="checkbox" onchange="updateSettings()" id="hwCheckedNotify"><span class="panelistic_checkbox_text">作业批改通知</span></div>
+			<!--span class="panelistic_placeholder"></span>
+			<div class="panelistic_checkbox"><input type="checkbox" onchange="updateSettings()"><span class="panelistic_checkbox_text">在线答疑通知</span></div-->
+		</div>
+		<span class="panelistic_placeholder"></span>
+		<div class="panelistic_panel">
+			<div class="panelistic_panel_name">修复资源</div><br><span class="panelistic_placeholder_large"></span>
+			<div style="font-size:14px" class="panelistic_panel">
+				修复资源可以解决部分资源丢失、无法显示的问题。</div><span class="panelistic_placeholder"></span>
+			<input type="button" value="修复资源" onclick="delres()"> 
 			<input type="button" value="清除缓存" onclick="electron.ipcRenderer.sendToHost('clearTemp')">
-			<input type="button" value="意见反馈" onclick="electron.shell.openExternal('https://github.com/cotzhang/app.Cot-Myipad-Plus/issues')" name="">
-			<!-- <input type="button" value="进入测试模式" onclick="electron.ipcRenderer.sendToHost('testmode');"> -->
-			<input type="button" value="Star me on Github" onclick="electron.shell.openExternal('https://github.com/cotzhang/app.Cot-Myipad-Plus')" name="">
+		</div>
+		<span class="panelistic_placeholder"></span>
+		<div class="panelistic_panel">
+			<div class="panelistic_panel_name">安装到 USB 设备</div><br><span class="panelistic_placeholder_large"></span>
+			<div class="panelistic_panel" style="font-size:14px">您可以将 PadPlus 2 安装到 USB 设备，并将产生的数据存储到便携设备上以便在不同设备上使用该软件。</div>
+			<span class="panelistic_placeholder"></span>
+	<!-- 		<div class="panelistic_checkbox"><input type="checkbox" onchange="" id="datatogether"><span class="panelistic_checkbox_text">与 USB 上的 PadPlus 2 共用数据</span></div>
+			<span class="panelistic_placeholder"></span> -->
+			<input type="button" value="安装到 USB 设备" onclick="location.href = './installusb.html'">
+			<!--span class="panelistic_placeholder"></span>
+			<input type="text" placeholder="CloudRetvCode" id="retvcodefield">
+			<input type="button" value="验证 CloudRetvCode 并启用" onclick="verifyAndEnable(document.getElementById('retvcodefield').value)">
+			<input type="button" value="联系开发者" style="color:red" onclick="contactDeveloper()"><br-->
+		</div>
+		<span class="panelistic_placeholder"></span>
+		<div class="panelistic_panel">
+			<div class="panelistic_panel_name">双账号模式</div><br><span class="panelistic_placeholder_large"></span>
+			<div style="font-size:14px" class="panelistic_panel">
+				添加一个辅助账号用于获取 sessionid，避免平板被下线</div>
+			<span class="panelistic_placeholder"></span>
+			<div id="doubleaccount1">
+				<input type="text" placeholder="睿易账号" id="accountidtxt"> <input type="button" value="登录" onclick="electron.ipcRenderer.sendToHost('logintosecondaccn',document.getElementById('accountidtxt').value)"></div>
+			<div id="doubleaccount2"><input type="button" value="删除辅助账号" onclick="fs.unlinkSync(getuserdatapath()+'/account2');electron.ipcRenderer.sendToHost('relogin')"></div>
+		</div>
+		<span class="panelistic_placeholder"></span>
+		<div class="panelistic_panel">
+			<div class="panelistic_panel_name">账号管理</div><br><span class="panelistic_placeholder_large"></span>
+			<input type="button" value="重新登录" onclick="electron.ipcRenderer.sendToHost('relogin',accndata.account,accndata.password)">
+			<input type="button" value="退出账号" onclick="electron.ipcRenderer.sendToHost('exitaccount')" name="">
 		</div>
 	</div>
 </body>

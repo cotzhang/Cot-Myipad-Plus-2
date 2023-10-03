@@ -107,7 +107,8 @@ body {
 	bottom: 0px;
 	position: absolute;
 	color: black;
-	backdrop-filter: blur(100px);
+	/*backdrop-filter: blur(100px);*/
+	/*we are not using it*/
 	background-color: #eee8;
 }
 

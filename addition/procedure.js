@@ -7,16 +7,15 @@ const os = require('os')
 // File Download
 const download = require('download');
 
-let getuserdatapath = () => {
-	if (process.platform != 'linux') return (process.env.appdata + '/' + 'cmp').replaceAll('\\', '/')
-}
 
-// Linux detection
-if (process.platform != 'win32') {
-	// Hey, you are using the linux system!
-	getuserdatapath = () => {
+const getuserdatapath = () => {
+	if (process.platform != 'win32') {
 		return process.cwd() + '/ldata'
 	}
+	if (fs.existsSync(process.cwd() + '/onusb')) {
+		return process.cwd() + '/data'
+	}
+	return require('path').join(process.env.appdata, 'cmp').replaceAll('\\', '/')
 }
 
 // Fs Promisfy
@@ -127,8 +126,14 @@ function syncData() {
 	// Disable sidebar click
 	// document.getElementById('panelistic_sidebar').style.pointerEvents = "none";
 
-	document.getElementById('allmodulebtn').style.display = "block";
+	document.getElementById("nologinbtn").style.display = "none";
+	document.getElementById("allmodulebtn").style.display = "block";
 	document.getElementById("fragment_title").innerText = "自主学习";
+
+	if (fs.existsSync(process.cwd() + '/onusb')) {
+		document.getElementById("onusbnote").style.display = "block";
+	}
+
 	if (webview.getURL().indexOf("selflearn.html") == -1) { webview.src = __dirname + "/fragments/selflearn.html"; }
 	try {
 		globalDataFile = JSON.parse(fs.readFileSync(getuserdatapath() + '/data'));
@@ -594,19 +599,25 @@ function storeAnswersheetsStudent() {
 	// finishAllSyncProgress()
 }
 
+var panelistic;
 let globalTestMode = false;
 
 // Main Process
 window.onload = function() {
 
-	// Linux
-	let xml2js;
-	try {
-		xml2js = require('xml2js');
-	} catch (err) {
-		document.getElementById('sel_questionbook').style.display = 'none';
-		document.getElementById('sel_libres').style.display = 'none';
-	}
+	panelistic = new Panelistic();
+	panelistic.initialize()
+
+	requestIdleCallback(() => {
+		// Linux
+		let xml2js;
+		try {
+			xml2js = require('xml2js');
+		} catch (err) {
+			document.getElementById('sel_questionbook').style.display = 'none';
+			document.getElementById('sel_libres').style.display = 'none';
+		}
+	})
 
 	// Get main webview
 	webview = document.getElementById('webview');
@@ -623,8 +634,21 @@ window.onload = function() {
 					// This is the first time login
 					// Show welcome screen.
 					log("First login", 0);
+					document.getElementById("cloudretv").style.display = "none";
+					document.getElementById("nologinbtn").style.display = "block";
+					if (fs.existsSync(process.cwd() + '/onusb')) {
+						document.getElementById("onusbnote").style.display = "block";
+						document.getElementById('sel_installusb').style.display = "none"
+					}
+					if (!fs.existsSync(getuserdatapath())) {
+						fs.mkdirSync(getuserdatapath())
+					}
+					document.getElementById("allmodulebtn").style.display = "none";
 					// document.getElementById('panelistic_sidebar').style.pointerEvents = "none";
-					webview.src = __dirname + "/welcome.html"
+					webview.src = __dirname + "/welcome.html";
+					// if (require('os').userInfo().username.indexOf('seewo') != -1) {
+					// 	panelistic.dialog.confirm("提示", "检测到正在一体机登录，是否切换到一体机模式？", "确定", "取消", (result) => { if (result) { switchSeewo() } })
+					// }
 				} else {
 					// No need for login
 					globalAccountFile = JSON.parse(data);
@@ -672,7 +696,7 @@ window.onload = function() {
 		document.documentElement.style.setProperty('--sidebar-width', '00px');
 	} else {
 		// 在窗口宽度大于等于400时执行的代码
-		console.log("窗口宽度大于等于400");
+		// console.log("窗口宽度大于等于400");
 		document.documentElement.style.setProperty('--sidebar-width', '200px');
 	}
 
@@ -745,9 +769,6 @@ window.onload = function() {
 			// console.log(event.args[2])
 			if (event.args[2] == 0) {
 				serverADDR = 'gzzx.lexuewang.cn:8003';
-				if (!fs.existsSync(getuserdatapath() + '/actived')) {
-					// openActWin();
-				}
 				initlogin(event.args[0], event.args[1], serverADDR);
 			} else if (event.args[2] == 1) {
 				serverADDR = 'wzgjzx.lexuewang.cn:8003';
@@ -768,6 +789,9 @@ window.onload = function() {
 				serverADDR = 'zbwz.lexuewang.cn:8082';
 				initlogin(event.args[0], event.args[1], serverADDR);
 			} else if (event.args[2] == 7) {
+				serverADDR = 'hsefz.lexuewang.cn:8003';
+				initlogin(event.args[0], event.args[1], serverADDR);
+			} else if (event.args[2] == 8) {
 				panelistic.dialog.input('选择学校', "请输入您的学校服务器地址<br><br>提示：您可以在Github上提交一个issue，将您的学校添加到列表中", "example.lexuewang.cn:8003", "尝试登录", (val) => {
 					serverADDR = val;
 					console.log('selected server: ' + serverADDR)
@@ -812,12 +836,31 @@ window.onload = function() {
 			currDiagId.push(panelistic.dialog.alert(event.args[0], event.args[1], event.args[2], () => {
 				disableSync = false;
 			}));
+		} else if (event.channel == "autoshutdown") {
+			let sdtmo = setTimeout(() => {
+				const exec2 = require('child_process').exec;
+				exec2('shutdown /s /t 0', (error, stdout, stderr) => {
+					if (error) {
+						console.error(`执行关机命令时出错: ${error}`);
+						return;
+					}
+					console.log(`stdout: ${stdout}`);
+					console.error(`stderr: ${stderr}`);
+				});
+			}, 60000);
+			panelistic.dialog.alert("提示", "系统将在60秒后自动关机", "取消", () => {
+				clearTimeout(sdtmo);
+			});
 		} else if (event.channel == "reloadalert") {
 			disableSync = true;
 			currDiagId.push(panelistic.dialog.alert(event.args[0], event.args[1], event.args[2], () => {
 				disableSync = false;
 				window.location.reload()
 			}));
+		} else if (event.channel == "askifshutdown") {
+			panelistic.dialog.confirm('自动关机', '是否在上传完成后自动关机？', '确定', '取消', (choice) => {
+				webview.send("comfirmshutdown", choice)
+			});
 		} else if (event.channel == "qralert") {
 			disableSync = true;
 			currDiagId.push(panelistic.dialog.alert(event.args[0], event.args[1], event.args[2], () => {
@@ -1033,6 +1076,7 @@ window.onload = function() {
 				}
 			})();
 		} else if (event.channel == "downF") {
+			log("Downloading file...", 0)
 			if (!fs.existsSync(getuserdatapath() + '/downloads')) {
 				fs.mkdirSync(getuserdatapath() + '/downloads')
 			}
@@ -1133,17 +1177,7 @@ window.onload = function() {
 			let imgwidth;
 			let imgheight;
 
-			const wallpaper = require('node-wallpaper').default;
-			wallpaper.get().then(wallpaper => {
-				const image = nativeImage.createFromPath(wallpaper);
-				const size = image.getSize();
-				imgwidth = size.width;
-				imgheight = size.height;
 
-				fs.watchFile(wallpaper, (curr, prev) => {
-					rcwin.webContents.executeJavaScript(`refWallpaper()`);
-				});
-			});
 			const { width, height } = remote.screen.getPrimaryDisplay().workAreaSize;
 
 			// 监听窗口的 move 事件
@@ -1232,17 +1266,7 @@ function openActWin() {
 	let imgwidth;
 	let imgheight;
 
-	const wallpaper = require('node-wallpaper').default;
-	wallpaper.get().then(wallpaper => {
-		const image = nativeImage.createFromPath(wallpaper);
-		const size = image.getSize();
-		imgwidth = size.width;
-		imgheight = size.height;
 
-		fs.watchFile(wallpaper, (curr, prev) => {
-			actwin.webContents.executeJavaScript(`refWallpaper()`);
-		});
-	});
 	const { width, height } = remote.screen.getPrimaryDisplay().workAreaSize;
 
 	// 监听窗口的 move 事件
@@ -1309,17 +1333,7 @@ function openAsWin(event) {
 	let imgwidth;
 	let imgheight;
 
-	const wallpaper = require('node-wallpaper').default;
-	wallpaper.get().then(wallpaper => {
-		const image = nativeImage.createFromPath(wallpaper);
-		const size = image.getSize();
-		imgwidth = size.width;
-		imgheight = size.height;
 
-		fs.watchFile(wallpaper, (curr, prev) => {
-			aswindow.webContents.executeJavaScript(`refWallpaper()`);
-		});
-	});
 	const { width, height } = remote.screen.getPrimaryDisplay().workAreaSize;
 
 	// 监听窗口的 move 事件
@@ -1392,17 +1406,7 @@ function openChatWin() {
 		let imgwidth;
 		let imgheight;
 
-		const wallpaper = require('node-wallpaper').default;
-		wallpaper.get().then(wallpaper => {
-			const image = nativeImage.createFromPath(wallpaper);
-			const size = image.getSize();
-			imgwidth = size.width;
-			imgheight = size.height;
 
-			fs.watchFile(wallpaper, (curr, prev) => {
-				chatwin.webContents.executeJavaScript(`refWallpaper()`);
-			});
-		});
 		const { width, height } = remote.screen.getPrimaryDisplay().workAreaSize;
 
 		// 监听窗口的 move 事件
@@ -1452,6 +1456,29 @@ function openLargeImg() {
 	largeImgWin.loadURL('file:///' + __dirname + '/imgpreview.html');
 	if (globalTestMode) largeImgWin.webContents.openDevTools({ mode: 'detach' })
 	largeImgWin.removeMenu();
+}
+
+function openSeiue() {
+	let seiue = new remote.BrowserWindow({
+		backgroundColor: '#00000000',
+		show: true,
+		width: 1288,
+		height: 860,
+		minWidth: 1288,
+		minHeight: 400,
+		webPreferences: {
+			nodeIntegration: true,
+			enableRemoteModule: true,
+			contextIsolation: false,
+			webviewTag: true,
+			nodeIntegrationInWorker: true,
+			ignoreCertificateErrors: true
+		}
+	})
+	let reloadAble = true;
+	seiue.loadURL('file:///' + __dirname + '/seiue.html');
+	if (globalTestMode) seiue.webContents.openDevTools({ mode: 'detach' })
+	seiue.removeMenu();
 }
 
 // Exit
@@ -1654,7 +1681,7 @@ function initlogin(id, pwmd5, serverADDR, second) {
 		id = account2.account;
 		pwmd5 = account2.password;
 	}
-	console.log(id,pwmd5)
+	console.log(id, pwmd5)
 	currdiag = panelistic.dialog.salert("正在登录");
 	let reqstr = `<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><UsersLoginJson xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><lpszUserName i:type="d:string">${id}</lpszUserName><lpszPasswordMD5 i:type="d:string">${pwmd5}</lpszPasswordMD5><lpszClientID i:type="d:string">myipad_</lpszClientID><lpszHardwareKey i:type="d:string">MODEL: BZT-W09
 WifiMac: 12:34:56:78:90:ab
@@ -1667,7 +1694,7 @@ Flavor: normalAppKey: TeacherPad
 Flavor: normal</lpszHardwareKey></UsersLoginJson></v:Body></v:Envelope>`;
 	if (serverADDR == 'qdez.lexuewang.cn:8003') {
 		reqstr = '<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><UsersLoginJson xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><lpszUserName i:type="d:string">' + id + '</lpszUserName><lpszPasswordMD5 i:type="d:string">' + pwmd5 + '</lpszPasswordMD5><lpszClientID i:type="d:string">myipad_</lpszClientID><lpszHardwareKey i:type="d:string">BOARD: SDM450\nBOOTLOADER: unknown\nBRAND: Lenovo\nCPU_ABI: armeabi-v7a\nCPU_ABI2: armeabi\nDEVICE: X605M\nDISPLAY: TB-X605M_S000018_20220316_NingBoRuiYi\nFINGERPRINT: Lenovo/LenovoTB-X605M/X605M:8.1.0/OPM1.171019.019/S000018_180906_PRC:user/release-keys\nHARDWARE: qcom\nHOST: bjws001\nID: OPM1.171019.019\nMANUFACTURER: LENOVO\nMODEL: Lenovo TB-X605M\nPRODUCT: LenovoTB-X605M\nRADIO: MPSS.TA.2.3.c1-00705-8953_GEN_PACK-1.159624.0.170600.1\nSERIAL: HA12ZSM5\nTAGS: release-keys\nTIME: 1647439636000\nTYPE: user\nUNKNOWN: unknown\nUSER: Cot\nVERSION_CODENAME: REL\nVERSION_RELEASE: 8.1.0\nVERSION_SDK_INT: 27\nWifiMac: aa:bb:12:34:56:78\nWifiSSID: "MyipadPlus"\nMemTotal:        2894388 kB\nprocessor: 0\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 1\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 2\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 3\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 4\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 5\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 6\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 7\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nHardware: Qualcomm Technologies, Inc SDM450\n\nIMEI: 869335031262488\nInternal: 23592MB\nCPUCores: 8\nScreen: 1920x1128\nservices.jar: 59a4f38ee38bddf7780c961b5f4e0855\nframework.jar: 7d68c7c5690ca8cda56c3778c94a2cc2\nPackageName: com.netspace.myipad\nClientVersion: 5.2.3.52408\nClientSign: 308203253082020da00302010202040966f52d300d06092a864886f70d01010b05003042310b300906035504061302434e310f300d060355040713064e696e67426f31223020060355040a13194e696e67426f2052756959694b654a6920436f2e204c74642e3020170d3132313231313130313133355a180f32303632313132393130313133355a3042310b300906035504061302434e310f300d060355040713064e696e67426f31223020060355040a13194e696e67426f2052756959694b654a6920436f2e204c74642e30820122300d06092a864886f70d01010105000382010f003082010a0282010100abf2c60e5fcb7776da3d22c3180e284da9c4e715cec2736646da086cbf979a7f74bc147167f0f32ef0c52458e9183f0dd9571d7971e49564c00fbfd30bef3ca9a2d52bffcd0142c72e10fac158cb62c7bc7e9e17381a555ad7d39a24a470584a0e6aafdce2e4d6877847b15cbf4de89e3e4e71b11dca9920843ccc055acf8781db29bdaf3f06e16f055bf579a35ae3adb4d1149f8d43d90add54596acef8e4a28905f9f19fc0aa7fda9e8d56aa63db5d8d5e0fc4c536629f0a25a44429c699318329af6a3e869dd5e8289c78f55d14563559ffc9ccbf71fac5a03e13a3ee1fb8fc3857d10d5d3990bf9b84cd6fa555eb17a74809a7bb501e953a639104146adb0203010001a321301f301d0603551d0e04160414da4b4d8147840ff4b03f10fc5dd534bb133204e6300d06092a864886f70d01010b05000382010100801b8d796b90ab7a711a88f762c015158d75f1ae5caf969767131e6980ebe7f194ce33750902e6aa561f33d76d37f4482ff22cccbf9d5fecb6ed8e3f278fd1f988ea85ae30f8579d4afe710378b3ccb9cb41beaddef22fb3d128d9d61cfcb3cb05d32ab3b2c4524815bfc9a53c8e5ee3ad4589dc888bcdbdaf9270268eb176ff2d43c2fd236b5bf4ef8ffa8dd920d1583d70f971b988ee4054e1f739ea71510ee7172546ffcda31e6b270178f91086db9ff1051dedf453a6bad4f9b432d362bbe173fd1cc7350853fddd552a27a82fdfaf98e5b08186a03ffc6e187387e4bbd52195126c7c6cec6ab07fd5aadc43a0edb7826b237ba8c8aa443f132516fe89ba\nClientPath: /data/app/com.netspace.myipad-bIpVmlM95uHO7y2D8HgJKg==/base.apk\nClientMD5: cd9f2dac5bdac80d0371f568bbf58515\nAppKey: MyiPad\nFlavor: normal</lpszHardwareKey></UsersLoginJson></v:Body></v:Envelope>\n'
-	} else if (serverADDR == 'qjyz1.lexuewang.cn:8016' || serverADDR == 'zbwz.lexuewang.cn:8082') {
+	} else if (serverADDR == 'qjyz1.lexuewang.cn:8016' || serverADDR == 'zbwz.lexuewang.cn:8082' || serverADDR == 'hsefz.lexuewang.cn:8003') {
 		log("5.2.3.52436  used.", 0)
 		reqstr = '<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><UsersLoginJson xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><lpszUserName i:type="d:string">' + id + '</lpszUserName><lpszPasswordMD5 i:type="d:string">' + pwmd5 + '</lpszPasswordMD5><lpszClientID i:type="d:string">myipad_</lpszClientID><lpszHardwareKey i:type="d:string">BOARD: SDM450\nBOOTLOADER: unknown\nBRAND: Lenovo\nCPU_ABI: armeabi-v7a\nCPU_ABI2: armeabi\nDEVICE: X605M\nDISPLAY: TB-X605M_S000018_20220316_NingBoRuiYi\nFINGERPRINT: Lenovo/LenovoTB-X605M/X605M:8.1.0/OPM1.171019.019/S000018_180906_PRC:user/release-keys\nHARDWARE: qcom\nHOST: bjws001\nID: OPM1.171019.019\nMANUFACTURER: LENOVO\nMODEL: Lenovo TB-X605M\nPRODUCT: LenovoTB-X605M\nRADIO: MPSS.TA.2.3.c1-00705-8953_GEN_PACK-1.159624.0.170600.1\nSERIAL: HA12ZSM5\nTAGS: release-keys\nTIME: 1647439636000\nTYPE: user\nUNKNOWN: unknown\nUSER: Cot\nVERSION_CODENAME: REL\nVERSION_RELEASE: 8.1.0\nVERSION_SDK_INT: 27\nWifiMac: 30:A7:50:23:C0:F7\nWifiSSID: "SUNNY"\nMemTotal:        2894388 kB\nprocessor: 0\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 1\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 2\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 3\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 4\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 5\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 6\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 7\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nHardware: Qualcomm Technologies, Inc SDM450\n\nIMEI: 869335031262488\nInternal: 23592MB\nCPUCores: 8\nScreen: 1920x1128\nservices.jar: 59a4f38ee38bddf7780c961b5f4e0855\nframework.jar: 7d68c7c5690ca8cda56c3778c94a2cc2\nPackageName: com.netspace.myipad\nClientVersion: 5.2.3.52436\nClientSign: 308203253082020da00302010202040966f52d300d06092a864886f70d01010b05003042310b300906035504061302434e310f300d060355040713064e696e67426f31223020060355040a13194e696e67426f2052756959694b654a6920436f2e204c74642e3020170d3132313231313130313133355a180f32303632313132393130313133355a3042310b300906035504061302434e310f300d060355040713064e696e67426f31223020060355040a13194e696e67426f2052756959694b654a6920436f2e204c74642e30820122300d06092a864886f70d01010105000382010f003082010a0282010100abf2c60e5fcb7776da3d22c3180e284da9c4e715cec2736646da086cbf979a7f74bc147167f0f32ef0c52458e9183f0dd9571d7971e49564c00fbfd30bef3ca9a2d52bffcd0142c72e10fac158cb62c7bc7e9e17381a555ad7d39a24a470584a0e6aafdce2e4d6877847b15cbf4de89e3e4e71b11dca9920843ccc055acf8781db29bdaf3f06e16f055bf579a35ae3adb4d1149f8d43d90add54596acef8e4a28905f9f19fc0aa7fda9e8d56aa63db5d8d5e0fc4c536629f0a25a44429c699318329af6a3e869dd5e8289c78f55d14563559ffc9ccbf71fac5a03e13a3ee1fb8fc3857d10d5d3990bf9b84cd6fa555eb17a74809a7bb501e953a639104146adb0203010001a321301f301d0603551d0e04160414da4b4d8147840ff4b03f10fc5dd534bb133204e6300d06092a864886f70d01010b05000382010100801b8d796b90ab7a711a88f762c015158d75f1ae5caf969767131e6980ebe7f194ce33750902e6aa561f33d76d37f4482ff22cccbf9d5fecb6ed8e3f278fd1f988ea85ae30f8579d4afe710378b3ccb9cb41beaddef22fb3d128d9d61cfcb3cb05d32ab3b2c4524815bfc9a53c8e5ee3ad4589dc888bcdbdaf9270268eb176ff2d43c2fd236b5bf4ef8ffa8dd920d1583d70f971b988ee4054e1f739ea71510ee7172546ffcda31e6b270178f91086db9ff1051dedf453a6bad4f9b432d362bbe173fd1cc7350853fddd552a27a82fdfaf98e5b08186a03ffc6e187387e4bbd52195126c7c6cec6ab07fd5aadc43a0edb7826b237ba8c8aa443f132516fe89ba\nClientPath: /data/app/com.netspace.myipad-CNzXLolDcEjy6PDjxusEyA==/base.apk\nClientMD5: 83213f069973404d9764ba3be9800021\nAppKey: MyiPad\nFlavor: normal</lpszHardwareKey></UsersLoginJson></v:Body></v:Envelope>\n'
 	} else if (serverADDR == 'gzzx.lexuewang.cn:8003') {
@@ -1723,26 +1750,30 @@ Flavor: normal</lpszHardwareKey></UsersLoginJson></v:Body></v:Envelope>`;
 					})
 				} catch (err) { log(err.message, 2) }
 				try {
-					getTemporaryStorageToGzzxSingle("cmp_pp2_cloud_.htm1" + getGlobalUserguid(), (code) => {
-						getTemporaryStorageToGzzx("cmp_pp2_cloud_alreadyactivated.htm1", (data) => {
-							if (data.split(",").indexOf(code) != -1) {
-								fs.writeFileSync(getuserdatapath() + "/cloudretv", "deactivated");
-								document.getElementById("cloudretv").style.background = "#4aff4a73";
-								document.getElementById("cloudretv").onclick = () => {
-									webview.loadURL('file:///' + __dirname + '/fragments/cloudretvenabled.html')
+					setTimeout(() => {
+						getTemporaryStorageToGzzxSingle("cmp_pp2_cloud_.htm1" + getGlobalUserguid(), (code) => {
+							getTemporaryStorageToGzzx("cmp_pp2_cloud_alreadyactivated.htm1", (data) => {
+								if (data.split(",").indexOf(code) != -1) {
+									fs.writeFileSync(getuserdatapath() + "/cloudretv", "deactivated");
+									document.getElementById("cloudretv").style.background = "#4aff4a73";
+									document.getElementById("cloudretv").onclick = () => {
+										webview.loadURL('file:///' + __dirname + '/fragments/cloudretvenabled.html')
+									}
+								} else {
+									fs.unlinkSync(getuserdatapath() + "/cloudretv");
 								}
-							} else {
-								fs.unlinkSync(getuserdatapath() + "/cloudretv");
-							}
-						});
-					})
+							});
+						})
+					}, 1000)
 				} catch (err) { log(err.message, 2) }
-				fs.writeFileSync(getuserdatapath() + (second ? ('/account2') : ('/account')), JSON.stringify({ account: id, password: pwmd5, server: serverADDR }))
+				fs.writeFileSync(getuserdatapath() + (second ? ('/account2') : ('/account')), JSON.stringify({ account: id, password: pwmd5, server: serverADDR }));
+
+				document.getElementById("cloudretv").style.display = "block";
 				if (!fs.existsSync(getuserdatapath() + "/account2")) {
 					fs.writeFile(getuserdatapath() + '/data', output, () => {
 						syncData();
 					});
-				}else{
+				} else {
 					let newcfgs = globalDataFile;
 					newcfgs.sessionid = allcfgs.sessionid;
 					fs.writeFile(getuserdatapath() + '/data', JSON.stringify(newcfgs), () => {
@@ -1750,7 +1781,7 @@ Flavor: normal</lpszHardwareKey></UsersLoginJson></v:Body></v:Envelope>`;
 					});
 				}
 			} catch (err) {
-				console.error(err)
+				log(err.message, 2)
 				debugger;
 				panelistic.dialog.alert('错误', '登录的过程中出现错误，请检查平板是否能正常登录', '关闭')
 			}
@@ -2025,12 +2056,12 @@ function APPLYUPD(upditems, alertid) {
 // }
 
 // 使用electron的screen和desktopCapturer模块获取屏幕流
-const { screen, desktopCapturer } = remote;
-// const { remote } = require('electron');
+// const { screen, desktopCapturer } = remote;
+// // const { remote } = require('electron');
 
-// 获取主屏幕的id
-const display = screen.getPrimaryDisplay();
-const id = display.id;
+// // 获取主屏幕的id
+// const display = screen.getPrimaryDisplay();
+// const id = display.id;
 
 // 创建一个函数，接受一个端口号作为参数
 // function streamScreen(port) {
@@ -2184,3 +2215,16 @@ const id = display.id;
 
 // 调用函数，将屏幕推流到3000端口
 // streamScreen(3000);
+
+// function switchSeewo() {
+// 	panelistic.dialog.confirm("提示", "确定切换到一体机模式？", "确定", "取消", (choice) => {
+// 		if (choice) {
+// 			fs.writeFileSync(getuserdatapath() + '/useseewo', "useseewo");
+// 			window.location.reload()
+// 		}
+// 	})
+// }
+
+document.getElementById('onusbnote').onclick = function() {
+	panelistic.dialog.alert("正在以 USB 设备运行","PadPlus 2 正在以便携版模式在 USB 设备运行","确定");
+}

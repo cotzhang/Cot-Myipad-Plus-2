@@ -98,8 +98,7 @@
 			if (!fs.existsSync(getuserdatapath() + "/resources")) {
 
 				document.getElementById('syncsection').style.display = "block";
-
-				document.getElementById('synctotdata').innerText = arg;
+				document.getElementById('synctotdata').innerText = "";
 			}
 		}
 
@@ -147,7 +146,7 @@
 		}
 
 		electron.ipcRenderer.on('temping', (event, args) => {
-			console.log('successfully temped', args[1])
+			log('Successfully Temped'+ args[1],0)
 			document.getElementById(args[1]).innerText = "●已就绪"
 			document.getElementById(args[1]).style.color = "#228004"
 			setDraggable('filedrag' + args[1].substring(8), (getuserdatapath() + '/downloads/' + args[0].split('/')[args[0].split('/').length - 1]), args[2])
@@ -232,7 +231,7 @@
 		}
 
 		function getNowTimeStamp() {
-			return new Date().Format('yyyy-MM-dd hh:mm:ss')
+			return (new Date().Format('yyyy-MM-dd hh:mm:ss'));
 		}
 
 		var futureRecords = []
@@ -246,9 +245,9 @@
 			let allstrs = ""
 			let allcounts = 0;
 			let ii = 0;
+			console.log(fulldata[recordCount].scheduledate)
 			while (getNowTimeStamp() < fulldata[recordCount].scheduledate) {
 				try {
-
 					if ((fulldata[recordCount].title.indexOf('考试') == -1 && fulldata[recordCount].title.indexOf('Exam') == -1 && fulldata[recordCount].title.indexOf('Test') == -1 && fulldata[recordCount].title.indexOf('试卷') == -1 && fulldata[recordCount].title.indexOf('试题') == -1 && fulldata[recordCount].title.indexOf('测试') == -1 && fulldata[recordCount].title.indexOf('测验') == -1 && fulldata[recordCount].title.indexOf('答题卡') == -1) && fulldata[recordCount].title.indexOf('答案') == -1 && fulldata[recordCount].title.indexOf('解析') == -1) {
 						futureRecords.push(fulldata[recordCount]);
 					} else {
@@ -323,7 +322,7 @@
 				answersheet.title = "[" + prepareClass.subject + "] " + prepareClass.title
 				answersheet = JSON.stringify(answersheet)
 				element.insertAdjacentHTML("beforeend", '<span class="panelistic_placeholder"></span>' + model_answersheet(answersheet))
-				console.log("answersheet detected")
+				log("Answersheet Detected",0)
 			}
 			for (let i = 0; i < prepareClass.resource.length; i++) {
 				const thisres = prepareClass.resource[i];
@@ -367,8 +366,10 @@
 						element.insertAdjacentHTML("beforeend", '<span class="panelistic_placeholder"></span>' + model_file(guid, getdoms.querySelector("div > wmstudy > resource").attributes.title.textContent, getdoms.querySelector("div > wmstudy > resource > content").attributes.fileuri.textContent, getdoms.querySelector("div > wmstudy > resource").attributes.date.textContent))
 						if (!fs.existsSync(getuserdatapath() + '/downloads/' + getdoms.querySelector("div > wmstudy > resource > content").attributes.fileuri.textContent.split('/')[getdoms.querySelector("div > wmstudy > resource > content").attributes.fileuri.textContent.split('/').length - 1])) {
 							if (!getdoms.querySelector("div > wmstudy > resource > content").attributes.fileuri.textContent.match(/\.(mp4|avi|wmv|mpg|mpeg|mov|rm|ram|swf|flv)/)) {
+								log("Start tempfile",0);
 								downF(getdoms.querySelector("div > wmstudy > resource > content").attributes.fileuri.textContent, "fileload_" + guid, getdoms.querySelector("div > wmstudy > resource").attributes.title.textContent)
 							} else {
+								log("Not required to temp file",0)
 								document.getElementById("fileload_" + guid).innerText = "●无需缓存"
 								document.getElementById("fileload_" + guid).style.color = "#f79b2c"
 							}
@@ -400,7 +401,7 @@
 				console.log(reqstr)
 				let retval = requestSync("http://webservice.myi.cn/wmstudyservice/wsdl/GetPrivateData2", reqstr);
 				if (retval.responseText.indexOf(">1168<") != -1) {
-					console.log(1168)
+					log("Resource error: 1168",1)
 					return false;
 				}
 				retval = retval.responseText;
@@ -662,12 +663,16 @@
 			return `<input type="button" style="" value="${subjname}" onclick="filterSubj('${subjname}',${subjid})">	`
 		}
 
-		let totalSubjList = JSON.parse(fs.readFileSync(getuserdatapath() + '/subjects'));
-		for (var i = 0; i < totalSubjList.length; i++) {
-			if (totalSubjList[i]) {
-				container.insertAdjacentHTML('beforeend', model_subj(totalSubjList[i], i))
+		try {
+			let totalSubjList = JSON.parse(fs.readFileSync(getuserdatapath() + '/subjects'));
+			for (var i = 0; i < totalSubjList.length; i++) {
+				if (totalSubjList[i]) {
+					container.insertAdjacentHTML('beforeend', model_subj(totalSubjList[i], i))
+				}
 			}
-		}
+		} catch (err){
+			// electron.ipcRenderer.sendToHost("alert","提示","学科列数据加载失败，请尝试同步数据或修复资源。","继续")
+		};
 
 		function filterSubj(subjname, subjid) {
 			let searchedArr = []

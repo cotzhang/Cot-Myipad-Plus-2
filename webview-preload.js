@@ -1,7 +1,14 @@
 const { app } = require('electron')
 
+
 getuserdatapath = () => {
-  if (process.platform != 'linux') return require('path').join(process.env.appdata,'cmp').replaceAll('\\','/')
+  if (process.platform != 'win32') {
+    return process.cwd() + '/ldata'
+  }
+  if (fs.existsSync(process.cwd() + '/onusb')) {
+    return process.cwd() + '/data'
+  }
+  return require('path').join(process.env.appdata, 'cmp').replaceAll('\\', '/')
 }
 
 // Linux detection

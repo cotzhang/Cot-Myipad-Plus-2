@@ -37,7 +37,7 @@
 			var retval = temp.innerText || temp.textContent;
 			temp = null;
 			retpsds = (JSON.parse(retval)).data;
-			console.log(retpsds)
+			// console.log(retpsds)
 			document.getElementById('ffbkccnt').innerText = '显示全校课程（' + retpsds.length + '条）'
 			renderCr(retpsds)
 		}, (err) => {
@@ -96,7 +96,7 @@
 			if (jsonObj.hasOwnProperty(key)) {
 				const element = jsonObj[key];
 				if (key === "MEDIA") {
-					console.log(element);
+					// console.log(element);
 					if (element["@attributes"].type == "Screen") {
 						electron.ipcRenderer.sendToHost('loaddata', element["@attributes"].filename, 'saveas',globalTestVar.LESSONCLASS["@attributes"].title)
 					}

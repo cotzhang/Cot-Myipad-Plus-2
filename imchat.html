@@ -50,7 +50,7 @@
         panelistic = new Panelistic();
         panelistic.initialize();
         if (!alldatas.type2) {
-            console.log(alldatas)
+            // console.log(alldatas)
             document.getElementById('tlzname').innerText = alldatas.name;
             document.getElementById('modulebtn').value = "讨论组管理";
             document.getElementById('modulebtn').onclick = function() {
@@ -312,21 +312,21 @@
             simpleRequest("https://" + getGlobalServerAddr() + "/SendResponse?sessionid=" + getGlobalSessionId() + "&clientid=" + to + "&guid=" + rdguid + "&from=" + from + "&expire=0", JSON.stringify({ guid: rdguid, expire: "0", content: content, from: from }), [], callback, () => { electron.ipcRenderer.sendToHost("提示", "消息发送失败", "确定") }, 1000)
         }
 
-        function model_bubbleright(realname, msgcont, useravatar) {
+        function model_bubbleright(realname, msgcont, useravatar,date) {
             return `
 			<div class="bubbleright">
 				<div style="display: inline-block;vertical-align: bottom;width: calc(100% - 80px)">
-					<span style="font-size: 11px;">${realname}</span><br>
+					<span style="font-size: 11px;color: #666;">${date}</span>&nbsp;<span style="font-size: 11px;">${realname}</span><br>
 					<div class="msg" style="background-color: #aea;text-align: left;padding: 8px;top: 4px;position: relative;border-radius: 6px;max-width: 100%;display: inline-block;word-break: break-all;user-select:text">${msgcont}</div>
 				</div><img src="${useravatar}" onerror="this.src='src/no_pic.jpg'" style="height:30px;width:30px;margin: 4px;vertical-align:top;">
 			</div>`
         }
 
-        function model_bubbleleft(realname, msgcont, useravatar) {
+        function model_bubbleleft(realname, msgcont, useravatar,date) {
             return `
 			<div class="bubbleleft"><img src="${useravatar}" onerror="this.src='src/no_pic.jpg'" style="height:30px;width:30px;margin: 4px;vertical-align:top;">
 				<div style="display: inline-block;vertical-align: bottom;width: calc(100% - 80px)">
-					<span style="font-size: 11px;">${realname}</span><br>
+					<span style="font-size: 11px;">${realname}</span>&nbsp;<span style="font-size: 11px;color: #666;">${date}</span><br>
 					<div class="msg" style="background-color: #fff;padding: 8px;top: 4px;position: relative;border-radius: 6px;word-break: break-all;max-width: 100%;display: inline-block;user-select:text">${msgcont}</div>
 				</div>
 			</div>`
@@ -344,12 +344,12 @@
                 }
                 let allstrs = ""
                 let allmsgs = retval.reverse();
-                console.log(allmsgs)
+                // console.log(allmsgs)
                 for (var i = 0; i < allmsgs.length; i++) {
                     let cont = "";
                     if (JSON.parse(allmsgs[i].text).content.indexOf("PICTURE=") == 5) {
                         // This is a picture or drawpad.
-                        console.log(JSON.parse(allmsgs[i].text).content.substring(13).split(",")[0])
+                        // console.log(JSON.parse(allmsgs[i].text).content.substring(13).split(",")[0])
                         cont = `<img src="https://${getGlobalServerAddr()}/GetTemporaryStorage?filename=${JSON.parse(allmsgs[i].text).content.substring(13).split(",")[0]}" style="max-width:200px;max-height:100px;cursor:zoom-in;height:120px;" onclick="openLargeImg(this.src)" onload="this.style.height='auto'">`
                     } else if (JSON.parse(allmsgs[i].text).content.indexOf("INTENT=#Intent;") == 5) {
                         // This is a resource file.
@@ -383,9 +383,9 @@
                         cont = adaptImgToSrc(JSON.parse(allmsgs[i].text).content.substr(5, JSON.parse(allmsgs[i].text).content.indexOf('\nfields') - 5))
                     }
                     if (allmsgs[i].from == getGlobalPackageId()) {
-                        allstrs += model_bubbleright(getGlobalUsrname(), cont, `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${getGlobalPackageId()}&packageid=UserAvatar_${globalAccountFile.account}`);
+                        allstrs += model_bubbleright(getGlobalUsrname(), cont, `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${getGlobalPackageId()}&packageid=UserAvatar_${globalAccountFile.account}`,allmsgs[i].date);
                     } else {
-                        allstrs += model_bubbleleft(alldatas.username, cont, `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${clientid}&packageid=UserAvatar_${clientid.match(/\d+/g)}`);
+                        allstrs += model_bubbleleft(alldatas.username, cont, `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${clientid}&packageid=UserAvatar_${clientid.match(/\d+/g)}`,allmsgs[i].date);
                     }
                 }
                 document.getElementById('chatarea').innerHTML = allstrs;
@@ -429,12 +429,12 @@
                 }
                 let allstrs = ""
                 let allmsgs = retval.reverse();
-                console.log(allmsgs)
+                // console.log(allmsgs)
                 for (var i = 0; i < allmsgs.length; i++) {
                     let cont = "";
                     if (JSON.parse(allmsgs[i].text).content.indexOf("PICTURE=") == 5) {
                         // This is a picture or drawpad.
-                        console.log(JSON.parse(allmsgs[i].text).content.substring(13).split(",")[0])
+                        // console.log(JSON.parse(allmsgs[i].text).content.substring(13).split(",")[0])
                         cont = `<img src="https://${getGlobalServerAddr()}/GetTemporaryStorage?filename=${JSON.parse(allmsgs[i].text).content.substring(13).split(",")[0]}" style="max-width:200px;max-height:100px;cursor:zoom-in;height:120px;" onclick="openLargeImg(this.src)" onload="this.style.height='auto'">`
                     } else if (JSON.parse(allmsgs[i].text).content.indexOf("INTENT=#Intent;") == 5) {
                         // This is a resource file.
@@ -468,9 +468,9 @@
                         cont = adaptImgToSrc(JSON.parse(allmsgs[i].text).content.substr(5, JSON.parse(allmsgs[i].text).content.indexOf('\nfields') - 5))
                     }
                     if (extractText(JSON.parse(allmsgs[i].text).content) == getGlobalUsrname()) {
-                        allstrs += model_bubbleright(getGlobalUsrname(), cont, `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${getGlobalPackageId()}&packageid=UserAvatar_${globalAccountFile.account}`);
+                        allstrs += model_bubbleright(getGlobalUsrname(), cont, `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${getGlobalPackageId()}&packageid=UserAvatar_${globalAccountFile.account}`,allmsgs[i].date);
                     } else {
-                        allstrs += model_bubbleleft(extractText(JSON.parse(allmsgs[i].text).content), cont, `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${clientid}&packageid=UserAvatar_${clientid.match(/\d+/g)}`);
+                        allstrs += model_bubbleleft(extractText(JSON.parse(allmsgs[i].text).content), cont, `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${clientid}&packageid=UserAvatar_${clientid.match(/\d+/g)}`,allmsgs[i].date);
                     }
                 }
                 document.getElementById('chatarea').innerHTML = allstrs;

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="panelistic3.0-electron.css">
+	<script src="panelistic3.0-electron.js"></script>
+	<script src="./func.js"></script>
+	<title>希悦校园</title>
+	<style type="text/css"></style>
+	<link href="maticons.css" rel="stylesheet">
+	<style type="text/css">
+	.panelistic_sidebar_selection {
+		padding: 15px;
+	}
+	</style>
+	<script>
+		let panelistic;
+		let loaddiag;
+		let webview;
+		window.onload = function() {
+			panelistic = new Panelistic();
+			panelistic.initialize();
+
+		}
+
+		
+	</script>
+</head>
+
+<body>
+	<div id="panelistic_blur"></div>
+	<div id="panelistic_window" ondragstart="return false;">
+		<div id="panelistic_content">
+			<span>
+				<div class="panelistic_panel" style="position: absolute;margin: 8px;width: calc(100% - 458px);height: 39px;display: inline-block;">
+					<input type="button" class="material-icons" style="vertical-align:middle;" onclick="webview.goBack()" value="arrow_back">
+					<input type="button" class="material-icons" style="vertical-align:middle;" onclick="webview.reload()" value="refresh">
+					<input type="button" class="material-icons" style="vertical-align:middle;" onclick="webview.loadURL('https://chalk-c3.seiue.com')" value="home">
+					<input type="button" class="material-icons" style="vertical-align:middle;" onclick="webview.goForward()" value="arrow_forward">
+					<input type="text" value="" disabled="" style="vertical-align:middle;width: calc(100% - 195px);" id="titlebar">
+				</div>
+				<div class="panelistic_panel" style="position: absolute;margin: 8px;width: 394px;height: 39px;display: inline-block;/* left: 927px; */right: 2px;">
+					<div class="panelistic_panel" style="width: 203px;display:inline-block;vertical-align:middle;font-size:14px" id="statelabel">抢课助手 - 请稍等</div>
+					<select style="vertical-align:middle" id="freq">
+						<option>1次/秒&nbsp;</option>
+						<option>5次/秒&nbsp;</option>
+					</select>
+					<input type="button" style="vertical-align:middle;" onclick="webview.loadURL('https://chalk-c3.seiue.com')" value="启动抢课" disabled="true" id="startqk">
+				</div>
+			</span>
+			<div id="panelistic_panel" style="position: absolute;margin: 8px;width: calc(100% - 16px);height: calc(100% - 84px);top: 68px;">
+				<webview id="webview" nodeintegration="true" disablewebsecurity webpreferences="contextIsolation=no" src="https://chalk-c3.seiue.com" />
+				</webview>
+			</div>
+		</div>
+	</div>
+	<style type="text/css">
+	body {
+		background-color: #aabfcc;
+	}
+
+	@media (prefers-color-scheme: dark) {
+		body {
+			background-color: #45315ccc;
+		}
+	}
+	</style>
+</body>
+<script type="text/javascript">
+let state = document.getElementById('statelabel');
+webview = document.getElementById('webview');
+webview.addEventListener('dom-ready', () => {
+	document.querySelector("#webview").shadowRoot.querySelector("iframe").style.borderRadius = "8px";
+})
+webview.addEventListener('did-navigate', () => {
+	
+webview.executeJavaScript(`window.open=(url)=>{location.href=url}`)
+})
+webview.addEventListener('page-title-updated', (title) => {
+	document.getElementById('titlebar').value = title.title;
+	if (webview.getURL().indexOf("passport.seiue.com") != -1) {
+		state.innerText = "抢课助手 - 请登录希悦账号"
+		document.getElementById("startqk").disabled = "disabled";
+	} else if (webview.getURL().indexOf("chalk-c3.seiue.com") != -1) {
+		state.innerText = "抢课助手 - 请打开选课页面"
+		document.getElementById("startqk").disabled = "disabled";
+	} else if (webview.getURL().indexOf("election.seiue.com") != -1) {
+		state.innerText = "抢课助手 - 就绪"
+		document.getElementById("startqk").disabled = "";
+	}
+})
+
+
+function startQk() {
+    panelistic.dialog.confirm("抢课助手", "确定要开始抢课吗？刷新页面可以重选课程。建议在选课时间前1分钟开始抢课，过早开始抢课或抢课频率过高可能会触发服务器限制。", "确定", "取消", (result) => {
+        if (result) {
+            state.innerText = "抢课助手 - 抢课中"
+            webview.executeJavaScript(webviewjs);
+        }
+    })
+}
+document.getElementById('startqk').onclick=startQk;
+
+if (getGlobalUserguid() == "ae600da64696432a839532890d8d3f96") {
+	// 获取<select>元素
+	var select = document.getElementById("freq");
+
+	// 创建要添加的两个新选项
+	var option1 = document.createElement("option");
+	option1.text = "10次/秒";
+	var option2 = document.createElement("option");
+	option2.text = "20次/秒";
+
+	// 将新选项添加到<select>元素中
+	select.add(option1);
+	select.add(option2);
+}
+
+function getInterval() {
+	let optarr = [1000, 200, 100, 50];
+	return optarr[document.getElementById('freq').selectedIndex];
+}
+
+var webviewjs = `document.querySelector("#app > div > div.body.container > div.content > div.sidebar > div > div.submit.election-submit.fixed > button").disabled="";
+document.querySelector("#app > div > div.body.container > div.content > div.sidebar > div > div.submit.election-submit.fixed > button").class="btn";setInterval(function(){
+				document.querySelector("#app > div > div.body.container > div.content > div.sidebar > div > div.submit.election-submit.fixed > button").click()
+			},${getInterval()})`
+</script>
+<script src="electron-mica.js"></script>
+
+</html>

@@ -5,8 +5,7 @@
 	<meta charset="utf-8">
 	<link rel="stylesheet" href="panelistic3.0-electron.css">
 	<script src="panelistic3.0-electron.js"></script>
-	
-<script src="./func.js"></script>
+	<script src="./func.js"></script>
 	<title>在线答疑</title>
 	<style type="text/css"></style>
 	<link href="maticons.css" rel="stylesheet">
@@ -52,41 +51,13 @@ let currDiagId = [];
 					panelistic.dialog.dismiss(currDiagId.pop())
 				} else if (event.channel == "loaddata") {
 					let loaddataalert = 0;
-					console.log(event.args)
+					// console.log(event.args)
 					if (!fs.existsSync(getuserdatapath() + '/downloads')) {
 						fs.mkdirSync(getuserdatapath() + '/downloads')
 					}
 					if (event.args[1] == 'saveas') {
 						downloadFile(event.args[0], event.args[3] ? (event.args[3]) : (getuserdatapath() + '/downloads/' + event.args[2] + "." + event.args[0].split('.')[event.args[0].split('.').length - 1]))
 					} else {
-						if (event.args[0].match(/\.(mp4|avi|wmv|mpg|mpeg|mov|rm|ram|swf|flv)/)) {
-							fs.writeFileSync(getuserdatapath() + '/videosrc', event.args[0])
-							// Create new session
-							const { session } = remote;
-							let ses = session.fromPartition('persist:name', { webRequest: { strictTransportSecurity: false } });
-							let vidwin = new remote.BrowserWindow({
-								width: 750,
-								height: 500,
-								webPreferences: {
-									nodeIntegration: true,
-									enableRemoteModule: true,
-									contextIsolation: false,
-									webviewTag: true,
-									nodeIntegrationInWorker: true,
-									ignoreCertificateErrors: true,
-									acceptInsecureCerts: true,
-									disableHSTS: true,
-									session: ses
-								},
-								webSecurity: false
-							})
-							if (globalTestMode) vidwin.webContents.openDevTools({ mode: "detach" })
-							vidwin.loadFile('video.html', { session: ses });
-							vidwin.on('close', () => {
-								vidwin = null
-							})
-							vidwin.removeMenu();
-						} else {
 							if (event.args[3]) {
 								loaddataalert = panelistic.dialog.salert("请稍等");
 								try {
@@ -106,7 +77,6 @@ let currDiagId = [];
 									webview.send('openfin', event.args[0]);
 								})();
 							}
-						}
 					}
 				}
 			})
@@ -131,10 +101,10 @@ let currDiagId = [];
 						panelistic.dialog.alert("提示","您没有权限删除该成员","确定");
 					}else{
 						alldatas.users.splice(stuxb,1);
-						console.log(alldatas);
+						// console.log(alldatas);
 						simpleRequestDel('https://'+getGlobalServerAddr()+'/restfuldatasource/imgroups/'+alldatas.guid+'.json','',[{ key: 'Set-Cookie', value: 'sessionid=' + getGlobalSessionId() + ';szUserGUID=' + getGlobalUserguid() + ';szUserName=' + globalAccountFile.account }],()=>{
 							autoRetryRequest("https://" + getGlobalServerAddr() + "/restfuldatasource/imgroups/dummy.json", JSON.stringify(alldatas), [{ key: 'Set-Cookie', value: 'sessionid=' + getGlobalSessionId() + ';szUserGUID=' + getGlobalUserguid() + ';szUserName=' + globalAccountFile.account }], (data) => {
-								console.log(data)
+								// console.log(data)
 								panelistic.dialog.alert("提示","删除成功","确定",()=>{window.location.reload()})
 							}, 200, 1000);
 						},(err)=>{if(err.status==401){panelistic.dialog.alert("提示","删除失败，请检查当前账号权限","确定")}else{panelistic.dialog.alert("提示","删除失败","确定")}},2000);
@@ -148,7 +118,7 @@ let currDiagId = [];
 		function getImgroups() {
 			simpleRequest("https://"+getGlobalServerAddr()+"/restfuldatasource/imgroups//users/?ownerguid="+getGlobalUserguid(),'',[{ key: 'Set-Cookie', value: 'sessionid=' + getGlobalSessionId() + ';szUserGUID=' + getGlobalUserguid() + ';szUserName=' + globalAccountFile.account }],(data)=>{
 				retdata = JSON.parse(data)
-				console.log(retdata)
+				// console.log(retdata)
 				let allstr=""
 				for (var i = 0; i < retdata.length; i++) {
 					allstr += model_imgroup(i,retdata[i].name);
@@ -156,7 +126,7 @@ let currDiagId = [];
 				document.getElementById('sectionup').insertAdjacentHTML("beforeend", allstr)
 				document.getElementById('listref').style.display='none';
 			},(err)=>{
-				console.log(err)
+				log(err.message,2)
 				panelistic.dialog.alert("提示","刷新列表出错，请检查网络后重试","确定")
 			},20000,true)
 		}
@@ -252,33 +222,11 @@ let currDiagId = [];
 			webview.src = (__dirname+'/seluser.html')
 		}
 
-
-		// Windows 10 detection
-		if (isWin10()) {
-			add_css(`body{
-				background-image: url(src/cmbg/light.jpg) !important;
-				background-position: center center;
-				background-repeat: no-repeat;
-				background-size:cover;
-				backdrop-filter:blur(5px);
-			}
-			#panelistic_content{
-				background-color:#fff8 !important
-			}
-			@media (prefers-color-scheme: dark) {
-				body{
-					background-image: url(src/cmbg/dark.jpg) !important
-				}
-				#panelistic_content{
-					background-color:#0008 !important
-				}
-			}`)
-		}
 	</script>
 </head>
 
 <body>
-		<div id="panelistic_blur"></div>
+	<div id="panelistic_blur"></div>
 	<div id="panelistic_window" ondragstart="return false;">
 		<div id="panelistic_content">
 			<div id="panelistic_sidebar" style="top: 0px;height: 100%">

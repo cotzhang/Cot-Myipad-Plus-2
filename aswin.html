@@ -25,17 +25,6 @@
 	let allAnswerDataThisSession = []
 	let typeStr = ['(判断)', '(单选)', '(多选)', '', '']
 
-	let getuserdatapath = () => {
-		if (process.platform != 'linux') return require('path').join(process.env.appdata, 'cmp').replaceAll('\\', '/')
-	}
-
-	// Linux detection
-	if (process.platform != 'win32') {
-		// Hey, you are using the linux system!
-		getuserdatapath = () => {
-			return process.cwd() + '/ldata'
-		}
-	}
 
 	function makeRelogin() {
 		fs.writeFileSync(getuserdatapath() + '/relogin', "error");
@@ -57,7 +46,7 @@
 			fs.mkdirSync(getuserdatapath() + '/userfile')
 		}
 		asObj = JSON.parse(unescape(arg));
-		console.log(asObj)
+		// console.log(asObj)
 		singleRecArr = parseRecToSingleDismension(asObj.category)
 		let totalStr = '';
 		document.getElementById('namesec').innerText = asObj.title;
@@ -173,9 +162,9 @@
 	function submitAns(answercamera, answerchoice, asresguid, teacherid, currquestionguid, scheduleguid, answertext) {
 		let randguid = getRandomGUID();
 		let reqstr = `{"answercamera":"${answercamera}","answerchoice":"${answerchoice}","answerdate":"${new Date().Format("yy-MM-dd hh:mm:ss")}","answerhandwritedata":"","answerhandwritepreview":"","answerindex":0,"answersheetresourceguid":"${asresguid}","answertext":"${answertext}","clientid":"myipad_${globalAccountFile.account}","favorite":0,"guid":"${randguid}","notifyclientid":"${teacherid}_teacherpad","questionguid":"${currquestionguid}","scheduleguid":"${scheduleguid}","state":0,"studentname":"${getGlobalUsrname()}","syn_isdelete":0,"syn_timestamp":"${new Date().Format("yy-MM-dd hh:mm:ss")}","userguid":"${getGlobalUserguid()}","username":"${globalAccountFile.account}"}`
-		console.log(reqstr)
+		// console.log(reqstr)
 		autoRetryRequest(`https://${getGlobalServerAddr()}/restfuldatasource/answersheetstudentanswer/${randguid}`, reqstr, [{ key: 'Set-Cookie', value: 'sessionid=' + getGlobalSessionId() + ';userguid=ffffffffffffffffffffffffffffffff' }], (data) => {
-			console.log(data)
+			// console.log(data)
 		}, 500, 1000)
 	}
 
@@ -261,7 +250,7 @@
 &lt;/wmStudy&gt;</szInputOutputXML></DataSynchronizePut></v:Body></v:Envelope>
 `
 					autoRetryRequestWSDL('http://webservice.myi.cn/wmstudyservice/wsdl/DataSynchronizePut', reqstr, (data) => {
-						console.log(packageId)
+						log("Answersheet image packageid: "+packageId,0)
 						panelistic.dialog.dismiss(upldiag)
 						if (data.indexOf("<AS:DataSynchronizePutResult>0</AS:DataSynchronizePutResult>") != -1) {
 							panelistic.dialog.alert("提示", "上传成功", "确定");
@@ -645,28 +634,6 @@
 				panelistic.dialog.dismiss(limg)
 			});
 		})
-	}
-
-	// Windows 10 detection
-	if (isWin10()) {
-		add_css(`body{
-		background-image: url(src/cmbg/light.jpg) !important;
-		background-position: center center;
-		background-repeat: no-repeat;
-		background-size:cover;
-		backdrop-filter:blur(5px);
-	}
-	#panelistic_content_sidebar_in{
-		background-color:#fff8 !important
-	}
-	@media (prefers-color-scheme: dark) {
-		body{
-			background-image: url(src/cmbg/dark.jpg) !important
-		}
-		#panelistic_content_sidebar_in{
-			background-color:#0008 !important
-		}
-	}`)
 	}
 	</script>
 </head>

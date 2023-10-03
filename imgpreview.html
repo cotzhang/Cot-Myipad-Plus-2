@@ -3,8 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  
-<script src="./func.js"></script>
+  <script src="./func.js"></script>
   <title>图片预览</title>
   <style>
   div {
@@ -46,15 +45,13 @@
   <div id="div" onmousewheel="return bbimg(this)"></div>
   <script language="javascript">
   const getuserdatapath = () => {
-    if (process.platform != 'linux') return require('path').join(process.env.appdata, 'cmp').replaceAll('\\', '/')
-  }
-
-  // Linux detection
-  if (process.platform != 'win32') {
-    // Hey, you are using the linux system!
-    getuserdatapath = () => {
+    if (process.platform != 'win32') {
       return process.cwd() + '/ldata'
     }
+    if (fs.existsSync(process.cwd() + '/onusb')) {
+      return process.cwd() + '/data'
+    }
+    return require('path').join(process.env.appdata, 'cmp').replaceAll('\\', '/')
   }
   var params = {
     zoomVal: 1,

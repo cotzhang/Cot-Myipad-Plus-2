@@ -11,7 +11,7 @@ const https = require('https');
 
 let webfile = (ufl) => { return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>跳转中</title><script>location.href="${ufl}";</script></head></html>` }
 
-console.log("Uploading file\n")
+console.log("Uploading file...\n")
 compressing.zip.compressDir('./build/win-unpacked/resources', './build/allres.zip')
     .then(() => {
         sendToGzzx("cmp_updatebin2", fs.readFileSync('./build/allres.zip'), () => {
@@ -63,7 +63,7 @@ compressing.zip.compressDir('./build/win-unpacked/resources', './build/allres.zi
                 })
             })
         });
-        sendToGzzx("cmp_version2", "ver" + fs.readFileSync('./cmpVerInfo.txt'), () => {});
+        sendToGzzx("cmp_version2", "ver00" + fs.readFileSync('./cmpVerInfo.txt'), () => {});
     })
 // sendToGzzx("cmptest","cmptest",()=>{});
 

@@ -9,20 +9,19 @@ const download = require('download');
 const ex = process.execPath;
 // const isDev = require('electron-is-dev')
 
-function getuserdatapath() {
-	return require('path').join(process.env.appdata, 'cmp').replaceAll('\\', '/');
-}
 
-// Linux detection
-if (process.platform != 'win32') {
-	// Hey, you are using the linux system!
-	getuserdatapath = () => {
+const getuserdatapath = () => {
+	if (process.platform != 'win32') {
 		return process.cwd() + '/ldata'
 	}
+	if (fs.existsSync(process.cwd() + '/onusb')) {
+		return process.cwd() + '/data'
+	}
+	return require('path').join(process.env.appdata, 'cmp').replaceAll('\\', '/')
 }
 
 let win;
-
+let startTime = new Date().getTime();
 
 function isWin10() {
 	return !(process.getSystemVersion().startsWith('10.0') && new Number(process.getSystemVersion().split('.')[2]) > 19046 && process.platform === 'win32')
@@ -49,7 +48,7 @@ function getSignContent(url, callback) {
 	require("axios")
 		.get(url)
 		.then(function(response) {
-			callback(response.data.replaceAll('\x00', '').replaceAll('\u0000', '').replaceAll('\b', ''))
+			callback(response.data.replace(/\x00|\u0000|\b/g, ''))
 		})
 		.catch(function(error) {
 			const { dialog } = require('electron')
@@ -131,7 +130,7 @@ function wrSig() {
 
 electron.app.whenReady().then(() => {
 	if (!process.argv.includes('--help')) {
-		if (isDev()) {
+		if (isDev() || process.platform == 'darwin') {
 			setTimeout(
 				checkIfCanSpawnWindow,
 				process.platform == "linux" ? 1000 : 0
@@ -203,21 +202,6 @@ function checkIfCanSpawnWindow() {
 	});
 	makeTray()
 
-	const { nativeImage } = require('electron');
-	let imgwidth;
-	let imgheight;
-
-	const wallpaper = require('node-wallpaper').default;
-	wallpaper.get().then(wallpaper => {
-		const image = nativeImage.createFromPath(wallpaper);
-		const size = image.getSize();
-		imgwidth = size.width;
-		imgheight = size.height;
-
-		fs.watchFile(wallpaper, (curr, prev) => {
-			win.webContents.executeJavaScript(`refWallpaper()`);
-		});
-	});
 	const { width, height } = electron.screen.getPrimaryDisplay().workAreaSize;
 	// 监听窗口的 move 事件
 	win.on('move', () => {
@@ -289,6 +273,9 @@ function checkIfCanSpawnWindow() {
 			if (!fs.existsSync(getuserdatapath() + '/relogin')) { win.show() }
 			fs.unlinkSync(getuserdatapath() + "/secondinstance")
 		}
+
+
+		console.log("Time consumed: " + (new Date().getTime() - startTime) + "ms");
 	});
 	win.on('close', (e) => {
 		try {
@@ -378,48 +365,48 @@ function makeTray() {
 	if (fs.existsSync(getuserdatapath() + '/account')) {
 		contextMenu = electron.Menu.buildFromTemplate([{
 			label: 'PadPlus 2',
-			icon:__dirname+'/src/icon16.png',
-			enabled:false
+			icon: __dirname + '/src/icon16.png',
+			enabled: false
 		}, {
 			type: 'separator'
 		}, {
 			label: '自主学习',
-			icon:__dirname+'/src/ic_dashboard_18pt.png',
+			icon: __dirname + '/src/ic_dashboard_18pt.png',
 			click: function() {
 				win.webContents.send('goto', 'fragments/selflearn')
 				win.show()
 			}
 		}, {
 			label: '课堂实录',
-			icon:__dirname+'/src/ic_movie_18pt.png',
+			icon: __dirname + '/src/ic_movie_18pt.png',
 			click: function() {
 				win.webContents.send('goto', 'classrecord')
 				win.show()
 			}
 		}, {
 			label: '我的设备',
-			icon:__dirname+'/src/ic_screen_share_18pt.png',
+			icon: __dirname + '/src/ic_screen_share_18pt.png',
 			click: function() {
 				win.webContents.send('goto', 'mypad')
 				win.show()
 			}
 		}, {
 			label: '资源库',
-			icon:__dirname+'/src/ic_folder_special_18pt.png',
+			icon: __dirname + '/src/ic_folder_special_18pt.png',
 			click: function() {
 				win.webContents.send('goto', 'library')
 				win.show()
 			}
 		}, {
 			label: '在线答疑',
-			icon:__dirname+'/src/ic_movie_18pt.png',
+			icon: __dirname + '/src/ic_movie_18pt.png',
 			click: function() {
 				win.webContents.send('gotochat')
 				win.show()
 			}
 		}, {
 			label: '试题本',
-			icon:__dirname+'/src/ic_collections_bookmark_18pt.png',
+			icon: __dirname + '/src/ic_collections_bookmark_18pt.png',
 			click: function() {
 				win.webContents.send('goto', 'fragments/cageutils')
 				win.show()
@@ -428,14 +415,14 @@ function makeTray() {
 			type: 'separator'
 		}, {
 			label: '学校成员',
-			icon:__dirname+'/src/ic_streetview_18pt.png',
+			icon: __dirname + '/src/ic_streetview_18pt.png',
 			click: function() {
 				win.webContents.send('goto', 'fragments/schoolconsole')
 				win.show()
 			}
 		}, {
 			label: '我的班级',
-			icon:__dirname+'/src/ic_contact_phone_18pt.png',
+			icon: __dirname + '/src/ic_contact_phone_18pt.png',
 			click: function() {
 				win.webContents.send('goto', 'fragments/userlist')
 				win.show()
@@ -443,7 +430,7 @@ function makeTray() {
 		}, {
 			type: 'separator'
 		}, {
-			icon:__dirname+'/src/ic_settings_applications_18pt.png',
+			icon: __dirname + '/src/ic_settings_applications_18pt.png',
 			label: '账号与设置',
 			click: function() {
 				win.webContents.send('goto', 'fragments/account')
@@ -453,7 +440,7 @@ function makeTray() {
 			type: 'separator'
 		}, {
 			label: '立即同步',
-			icon:__dirname+'/src/ic_restore_page_18pt.png',
+			icon: __dirname + '/src/ic_restore_page_18pt.png',
 			click: function() {
 				win.webContents.send('sync')
 			}
@@ -461,13 +448,13 @@ function makeTray() {
 			type: 'separator'
 		}, {
 			label: '显示主窗口',
-			icon:__dirname+'/src/ic_branding_watermark_18pt.png',
+			icon: __dirname + '/src/ic_branding_watermark_18pt.png',
 			click: function() {
 				win.show()
 			}
 		}, {
 			label: '退出',
-			icon:__dirname+'/src/ic_cancel_18pt.png',
+			icon: __dirname + '/src/ic_cancel_18pt.png',
 			click: function() {
 				console.log("Exit!");
 				delTray()
@@ -541,40 +528,40 @@ function stopWorker() {
 
 // 监听来自渲染进程的选择文件请求
 electron.ipcMain.on('open-img-dialog', (event) => {
-  // 打开文件选择对话框，仅允许选择图片文件
-  electron.dialog.showOpenDialog({
-    properties: ['openFile'],
-    filters: [
-      { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif'] }
-    ],
-    multiSelections: false // 不允许多选
-  }).then((result) => {
-    // 获取选中的文件路径
-    const filePaths = result.filePaths;
-    
-    // 将选中的文件路径发送回渲染进程
-    event.sender.send('selected-img', filePaths[0]);
-  }).catch((err) => {
-    console.log(err);
-  });
+	// 打开文件选择对话框，仅允许选择图片文件
+	electron.dialog.showOpenDialog({
+		properties: ['openFile'],
+		filters: [
+			{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif'] }
+		],
+		multiSelections: false // 不允许多选
+	}).then((result) => {
+		// 获取选中的文件路径
+		const filePaths = result.filePaths;
+
+		// 将选中的文件路径发送回渲染进程
+		event.sender.send('selected-img', filePaths[0]);
+	}).catch((err) => {
+		console.log(err);
+	});
 });
 
 // 监听来自渲染进程的选择文件请求
 electron.ipcMain.on('open-voice-dialog', (event) => {
-  // 打开文件选择对话框，仅允许选择图片文件
-  electron.dialog.showOpenDialog({
-    properties: ['openFile'],
-    filters: [
-      { name: 'Music', extensions: ['mp3','m4a','wav','ogg','flac'] }
-    ],
-    multiSelections: false // 不允许多选
-  }).then((result) => {
-    // 获取选中的文件路径
-    const filePaths = result.filePaths;
-    
-    // 将选中的文件路径发送回渲染进程
-    event.sender.send('selected-voice', filePaths[0]);
-  }).catch((err) => {
-    console.log(err);
-  });
+	// 打开文件选择对话框，仅允许选择图片文件
+	electron.dialog.showOpenDialog({
+		properties: ['openFile'],
+		filters: [
+			{ name: 'Music', extensions: ['mp3', 'm4a', 'wav', 'ogg', 'flac'] }
+		],
+		multiSelections: false // 不允许多选
+	}).then((result) => {
+		// 获取选中的文件路径
+		const filePaths = result.filePaths;
+
+		// 将选中的文件路径发送回渲染进程
+		event.sender.send('selected-voice', filePaths[0]);
+	}).catch((err) => {
+		console.log(err);
+	});
 });

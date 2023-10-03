@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="../panelistic3.0-electron.css">
+	<script src="../panelistic3.0-electron.js"></script>
+	<script src="../func.js"></script>
+	<title>安装到 USB 设备</title>
+	<link href="../maticons.css" rel="stylesheet">
+	<style type="text/css"></style>
+	<script type="text/javascript">
+	let panelistic;
+	const electron = require("electron");
+	const path = require('path')
+	const { ipcRenderer } = electron
+
+	window.onload = function() {
+		panelistic = new Panelistic();
+		panelistic.initialize();
+	}
+
+	electron.ipcRenderer.on('folderPath', (event, args) => {
+		electron.ipcRenderer.sendToHost("salert", "正在创建副本");
+		process.noAsar = true;
+		copyDirectory(process.cwd(), args);
+		process.noAsar = false;
+		if (fs.existsSync(getuserdatapath())) {
+			fs.writeFileSync(getuserdatapath() + "/usbpath", args);
+			copyDirectory(getuserdatapath(), path.join(args, "data"));
+		}
+		fs.writeFileSync(path.join(args, "onusb"), "useusb");
+		electron.ipcRenderer.sendToHost("dismisssalert");
+		electron.ipcRenderer.sendToHost("alert", "提示", "便携版创建成功", "确定")
+	})
+
+	function copyDirectory(source, destination) {
+		// 判断源目录是否存在
+		if (!fs.existsSync(source)) {
+			console.log(`Source directory '${source}' does not exist.`);
+			return;
+		}
+
+		// 创建目标目录
+		if (!fs.existsSync(destination)) {
+			fs.mkdirSync(destination);
+		}
+
+		// 读取源目录的内容
+		const files = fs.readdirSync(source);
+
+		// 遍历源目录的文件和子目录
+		files.forEach((file) => {
+			const sourcePath = path.join(source, file);
+			const destPath = path.join(destination, file);
+
+			const stat = fs.statSync(sourcePath);
+
+			// 如果是文件，则直接复制
+			if (stat.isFile() && (path.basename(sourcePath).indexOf('uninstall') == -1) && (path.basename(sourcePath).indexOf('Uninstall') == -1)) {
+				fs.copyFileSync(sourcePath, destPath);
+			}
+			// 如果是子目录，则递归调用复制函数
+			else if (stat.isDirectory()) {
+				copyDirectory(sourcePath, destPath);
+			}
+		});
+
+		console.log(`Directory '${source}' copied to '${destination}'.`);
+	}
+	</script>
+</head>
+
+<body>
+	<div id="panelistic_content_sidebar_in" class="DM_fonttitlel">
+		<div class="panelistic_panel">
+			<div class="panelistic_panel_name">安装到 USB 设备</div><br><span class="panelistic_placeholder_large"></span>
+			<div class="panelistic_panel" style="font-size:14px">您可以将 PadPlus 2 安装到 USB 设备，并将产生的数据存储到便携设备上以便在不同设备上使用该软件。您可以在安装 PadPlus 2 时选择将其安装到 USB 设备上，然后在需要使用该软件的设备上插入该 USB 设备。</div>
+			<span class="panelistic_placeholder"></span>
+			<div class="panelistic_panel" style="font-size:14px">请确保您的 USB 设备有至少 400MB 存储空间。</div>
+			<span class="panelistic_placeholder"></span>
+			<div class="panelistic_panel" style="font-size:14px">安装大约需要 3 分钟，请耐心等待。</div>
+			<span class="panelistic_placeholder"></span>
+			<div class="panelistic_panel" style="font-size:14px">在读写速度较慢的 USB 上使用可能会造成软件卡顿。</div>
+			<span class="panelistic_placeholder"></span>
+	<!-- 		<div class="panelistic_checkbox"><input type="checkbox" onchange="" id="datatogether"><span class="panelistic_checkbox_text">与 USB 上的 PadPlus 2 共用数据</span></div>
+			<span class="panelistic_placeholder"></span> -->
+			<input type="button" value="选择路径安装" onclick="electron.ipcRenderer.sendToHost('selPath')">
+			<!--span class="panelistic_placeholder"></span>
+			<input type="text" placeholder="CloudRetvCode" id="retvcodefield">
+			<input type="button" value="验证 CloudRetvCode 并启用" onclick="verifyAndEnable(document.getElementById('retvcodefield').value)">
+			<input type="button" value="联系开发者" style="color:red" onclick="contactDeveloper()"><br-->
+		</div>
+	</div>
+</body>
+
+</html>

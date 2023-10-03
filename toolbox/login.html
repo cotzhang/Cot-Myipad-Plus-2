@@ -36,6 +36,7 @@
 					srcinfo.studentid = allinfos.studentid;
 					srcinfo.subcenterguid = allinfos.subcenterguid;
 					srcinfo.userguid = allinfos.userguid;
+					srcinfo.usertype = allinfos.usertype;
 					fs.writeFileSync(getuserdatapath() + "/data",(JSON.stringify(srcinfo)));
 					globalAccountFile.account = document.getElementById("myiaccount").value;
 					fs.writeFileSync(getuserdatapath() + "/account",(JSON.stringify(globalAccountFile)))
