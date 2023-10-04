@@ -792,6 +792,9 @@ window.onload = function() {
 				serverADDR = 'hsefz.lexuewang.cn:8003';
 				initlogin(event.args[0], event.args[1], serverADDR);
 			} else if (event.args[2] == 8) {
+				serverADDR = 'maszjsyxx.lexuewang.cn:8003';
+				initlogin(event.args[0], event.args[1], serverADDR);
+			} else if (event.args[2] == 9) {
 				panelistic.dialog.input('选择学校', "请输入您的学校服务器地址<br><br>提示：您可以在Github上提交一个issue，将您的学校添加到列表中", "example.lexuewang.cn:8003", "尝试登录", (val) => {
 					serverADDR = val;
 					console.log('selected server: ' + serverADDR)
