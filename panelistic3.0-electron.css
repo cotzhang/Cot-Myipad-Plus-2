@@ -65,35 +65,35 @@ body {
 	transform: translate(-50%, -50%)
 }
 
-.panelistic_popup input{
+.panelistic_popup input {
 	margin: 8px;
 }
 
-.panelistic_popup input[type="button"]{
+.panelistic_popup input[type="button"] {
 	margin-left: 0;
 }
 
-.panelistic_salert{
+.panelistic_salert {
 	margin: 8px;
 }
 
 .panelistic_popup_title {
 	font-size: 18px;
 	font-weight: bold;
-    padding: 8px;
-    display: inline-block;
-    background: #fff;
-    border-radius: 7px;
-    margin: 5px;
-    width: -webkit-fill-available;
+	padding: 8px;
+	display: inline-block;
+	background: #fff;
+	border-radius: 7px;
+	margin: 5px;
+	width: -webkit-fill-available;
 }
 
 .panelistic_popup_content {
 	font-size: 14px;
-    padding: 8px;
-    padding-bottom: 1px;
-    padding-top: 4px;
-    display: inline-block;
+	padding: 8px;
+	padding-bottom: 1px;
+	padding-top: 4px;
+	display: inline-block;
 }
 
 .panelistic_popup_layout {
@@ -425,7 +425,7 @@ select option {
 		background-color: #00000044;
 	}
 
-	.loading span::before{
+	.loading span::before {
 		background-color: #fff;
 	}
 
@@ -435,6 +435,23 @@ select option {
 
 	.panelistic_sidebar_selection_selected {
 		background-color: #88888877 !important;
+	}
+
+	.panelistic_sidebar_selection:hover {
+		background-color: #44444499 !important;
+	}
+
+	.panelistic_sidebar_selection:active {
+		background-color: #444444aa !important;
+		/*padding: 8px;*/
+	}
+
+	.panelistic_sidebar_selection_selected:hover {
+		background-color: #88888888 !important;
+	}
+
+	.panelistic_sidebar_selection_selected:active {
+		background-color: #88888899 !important;
 	}
 
 	.panelistic_controlbtn {
@@ -562,6 +579,14 @@ select option {
 		color: white !important;
 		background-color: #444444cc;
 	}
+
+	.panelistic_popup_title {
+		background: #666;
+	}
+
+	.panelistic_checkbox_text {
+		color: #fff !important;
+	}
 }
 
 /* sidebar addon */
@@ -609,7 +634,15 @@ select option {
 }
 
 .panelistic_sidebar_selection_selected {
-	background-color: #eeeeeeaa !important;
+	background-color: #eeeeeeaa;
+}
+
+.panelistic_sidebar_selection_selected:hover {
+	background-color: #eeeeeebb;
+}
+
+.panelistic_sidebar_selection_selected:active {
+	background-color: #eeeeeecc;
 }
 
 .panelistic_sidebar_placeholder {

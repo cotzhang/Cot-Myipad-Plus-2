@@ -9,7 +9,7 @@ if (!fs.existsSync(getuserdatapath() + '/processed.jpg')) {
 
 
 function refWallpaper() {
-	document.getElementById('bgimg').src = document.getElementById('bgimg').src;
+	document.getElementById('bgimg').src = document.getElementById('bgimg').src+"?ts="+Date.now();
 }
 
 function setWallpaper() {

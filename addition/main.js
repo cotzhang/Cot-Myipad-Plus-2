@@ -22,7 +22,7 @@ const getuserdatapath = () => {
 }
 
 let win;
-// let startTime = new Date().getTime();
+let startTime = new Date().getTime();
 
 function isWin10() {
 	return !(process.getSystemVersion().startsWith('10.0') && new Number(process.getSystemVersion().split('.')[2]) > 19046 && process.platform === 'win32')
@@ -278,7 +278,7 @@ function checkIfCanSpawnWindow() {
 		}
 
 
-		// console.log("Time consumed: " + (new Date().getTime() - startTime) + "ms");
+		console.log("Time consumed: " + (new Date().getTime() - startTime) + "ms");
 
 		configureBackground(win);
 	});
@@ -662,18 +662,29 @@ function configureBackground(windows) {
 			const hasher = crypto.createHash('sha256');
 			hasher.update(fs.readFileSync(wallpaper2));
 			const signatureValue = hasher.digest("hex");
-			if (signatureValue != (fs.readFileSync(getuserdatapath() + "/bgsig")+"")) {
+			if (signatureValue != (fs.readFileSync(getuserdatapath() + "/bgsig") + "")) {
 				console.log("Start update blurring")
 				blurWallpaper(() => {
 					console.log("Update blur")
 					windows.webContents.send("wpupd")
 				});
 			}
+			fs.watchFile(wallpaper2, (curr, prev) => {
+				console.log("Start update blurring")
+				blurWallpaper(() => {
+					console.log("Update blur")
+					windows.webContents.send("wpupd")
+				});
+			});
 		});
 	}
 }
 
+var processlock = false;
+
 function blurWallpaper(cb) {
+	if (processlock) {return;}
+	processlock = true;
 	const wallpaper = require('node-wallpaper').default;
 	wallpaper.get().then(wallpaper2 => {
 		processImage(wallpaper2, (wallpaper3) => {
@@ -681,6 +692,7 @@ function blurWallpaper(cb) {
 			hasher.update(fs.readFileSync(wallpaper2));
 			const signatureValue = hasher.digest("hex");
 			fs.writeFileSync(getuserdatapath() + "/bgsig", signatureValue)
+			processlock = false;
 			cb(wallpaper3)
 		})
 	});
