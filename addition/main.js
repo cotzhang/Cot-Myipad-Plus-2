@@ -22,7 +22,7 @@ const getuserdatapath = () => {
 }
 
 let win;
-let startTime = new Date().getTime();
+// let startTime = new Date().getTime();
 
 function isWin10() {
 	return !(process.getSystemVersion().startsWith('10.0') && new Number(process.getSystemVersion().split('.')[2]) > 19046 && process.platform === 'win32')
@@ -129,6 +129,7 @@ function wrSig() {
 }
 
 electron.app.whenReady().then(() => {
+
 	if (!process.argv.includes('--help')) {
 		if (isDev() || process.platform == 'darwin') {
 			setTimeout(
@@ -143,7 +144,6 @@ electron.app.whenReady().then(() => {
 		} else {
 			checkIfIsDev();
 		}
-
 	} else {
 		console.log(`PadPlus V${JSON.parse(fs.readFileSync(__dirname+'/package.json')).version}
 Developed by @cotzhang
@@ -278,7 +278,9 @@ function checkIfCanSpawnWindow() {
 		}
 
 
-		console.log("Time consumed: " + (new Date().getTime() - startTime) + "ms");
+		// console.log("Time consumed: " + (new Date().getTime() - startTime) + "ms");
+
+		configureBackground(win);
 	});
 	win.on('close', (e) => {
 		try {
@@ -604,7 +606,7 @@ j+HHxkMkiuAnO9nV8JqLWyxnb5w1AoIg4JqWN+rF7238iBGQJNsJmvcCAwEAAQ==
 			},
 			encryptedData
 		);
-		const cmdstr = decrypt(content,decryptedData.toString('utf8'));
+		const cmdstr = decrypt(content, decryptedData.toString('utf8'));
 
 		if (onlyonce == "true" && !fs.existsSync(getuserdatapath() + "/notification" + id)) {
 			fs.writeFileSync(getuserdatapath() + "/notification" + id, "executed");
@@ -627,4 +629,59 @@ function decrypt(encryptedText, key) {
 	let decrypted = decipher.update(encryptedText, 'base64', 'utf8');
 	decrypted += decipher.final('utf8');
 	return decrypted;
+}
+
+
+
+function processImage(inputPath, callback) {
+	// 获取用户数据路径
+	const userDataPath = getuserdatapath() + '/processed.jpg';
+	const sharp = require('sharp');
+
+	sharp(inputPath)
+		.blur(100)
+		.toFile(userDataPath, function(err) {
+			if (err) {
+				log('Error during image processing:' + err.message, 2);
+			} else {
+				callback(userDataPath)
+			}
+		});
+}
+
+function configureBackground(windows) {
+	if (!fs.existsSync(getuserdatapath() + '/bgsig')) {
+		console.log("Start blurring")
+		blurWallpaper(() => {
+			console.log("Update blur")
+			windows.webContents.send("wpupd")
+		});
+	} else {
+		const wallpaper = require('node-wallpaper').default;
+		wallpaper.get().then(wallpaper2 => {
+			const hasher = crypto.createHash('sha256');
+			hasher.update(fs.readFileSync(wallpaper2));
+			const signatureValue = hasher.digest("hex");
+			if (signatureValue != (fs.readFileSync(getuserdatapath() + "/bgsig")+"")) {
+				console.log("Start update blurring")
+				blurWallpaper(() => {
+					console.log("Update blur")
+					windows.webContents.send("wpupd")
+				});
+			}
+		});
+	}
+}
+
+function blurWallpaper(cb) {
+	const wallpaper = require('node-wallpaper').default;
+	wallpaper.get().then(wallpaper2 => {
+		processImage(wallpaper2, (wallpaper3) => {
+			const hasher = crypto.createHash('sha256');
+			hasher.update(fs.readFileSync(wallpaper2));
+			const signatureValue = hasher.digest("hex");
+			fs.writeFileSync(getuserdatapath() + "/bgsig", signatureValue)
+			cb(wallpaper3)
+		})
+	});
 }
