@@ -20,9 +20,10 @@
 
 		electron.ipcRenderer.sendToHost("salert", "正在同步数据");
 
-		let reqstr = `<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><DataSynchronizeGet xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><lpszClientID i:type="d:string">${getGlobalPackageId()}</lpszClientID><szInputOutputXML i:type="d:string">&lt;wmStudy&gt;
+		let reqstr = `<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><DataSynchronizeGet xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><lpszClientID i:type="d:string">myipad_${globalAccountFile.account}</lpszClientID><szInputOutputXML i:type="d:string">&lt;wmStudy&gt;
    &lt;DataSynchronize skipcontent="true" version="1.1"/&gt;
-&lt;/wmStudy&gt;</szInputOutputXML></DataSynchronizeGet></v:Body></v:Envelope>`
+&lt;/wmStudy&gt;</szInputOutputXML></DataSynchronizeGet></v:Body></v:Envelope>
+`
 		autoRetryRequestWSDL("http://webservice.myi.cn/wmstudyservice/wsdl/GetPrivateData2", reqstr, (databack) => {
 			xml2js.parseString(databack, (err, result) => {
 				xml2js.parseString(result["SOAP-ENV:Envelope"]["SOAP-ENV:Body"][0]["AS:DataSynchronizeGetResponse"][0]["AS:szInputOutputXML"][0], (err, res) => {
@@ -37,7 +38,7 @@
 					renderIntoPages(allqbitems)
 				})
 			});
-		}, 500, 500)
+		}, 5000, 5000)
 	}
 
 	function renderUserList(list) {

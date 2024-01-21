@@ -1150,6 +1150,11 @@ window.onload = function() {
 			electron.ipcRenderer.send(event.args[0] ? 'openAutoStart' : 'closeAutoStart')
 		} else if (event.channel == 'salert') {
 			currDiagId.push(panelistic.dialog.salert(event.args[0]))
+		} else if (event.channel == 'timedsalert') {
+			let timedsalert = panelistic.dialog.salert(event.args[0]);
+			setTimeout(function() {
+				panelistic.dialog.dismiss(timedsalert);
+			},30000)
 		} else if (event.channel == 'dismisssalert') {
 			panelistic.dialog.dismiss(currDiagId.pop())
 		} else if (event.channel == 'activewin') {
@@ -1686,7 +1691,7 @@ function initlogin(id, pwmd5, serverADDR, second) {
 	}
 	console.log(id, pwmd5)
 	currdiag = panelistic.dialog.salert("正在登录");
-	let reqstr = `<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><UsersLoginJson xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><lpszUserName i:type="d:string">${id}</lpszUserName><lpszPasswordMD5 i:type="d:string">${pwmd5}</lpszPasswordMD5><lpszClientID i:type="d:string">myipad_</lpszClientID><lpszHardwareKey i:type="d:string">MODEL: BZT-W09
+	var reqstr = `<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><UsersLoginJson xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><lpszUserName i:type="d:string">${id}</lpszUserName><lpszPasswordMD5 i:type="d:string">${pwmd5}</lpszPasswordMD5><lpszClientID i:type="d:string">myipad_</lpszClientID><lpszHardwareKey i:type="d:string">MODEL: BZT-W09
 WifiMac: 12:34:56:78:90:ab
 services.jar: d54f80b88122485ef2e8efb9c6e81a06
 framework.jar: d54f80b88122485ef2e8efb9c6e81a06
@@ -1701,8 +1706,128 @@ Flavor: normal</lpszHardwareKey></UsersLoginJson></v:Body></v:Envelope>`;
 		log("5.2.3.52436  used.", 0)
 		reqstr = '<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><UsersLoginJson xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><lpszUserName i:type="d:string">' + id + '</lpszUserName><lpszPasswordMD5 i:type="d:string">' + pwmd5 + '</lpszPasswordMD5><lpszClientID i:type="d:string">myipad_</lpszClientID><lpszHardwareKey i:type="d:string">BOARD: SDM450\nBOOTLOADER: unknown\nBRAND: Lenovo\nCPU_ABI: armeabi-v7a\nCPU_ABI2: armeabi\nDEVICE: X605M\nDISPLAY: TB-X605M_S000018_20220316_NingBoRuiYi\nFINGERPRINT: Lenovo/LenovoTB-X605M/X605M:8.1.0/OPM1.171019.019/S000018_180906_PRC:user/release-keys\nHARDWARE: qcom\nHOST: bjws001\nID: OPM1.171019.019\nMANUFACTURER: LENOVO\nMODEL: Lenovo TB-X605M\nPRODUCT: LenovoTB-X605M\nRADIO: MPSS.TA.2.3.c1-00705-8953_GEN_PACK-1.159624.0.170600.1\nSERIAL: HA12ZSM5\nTAGS: release-keys\nTIME: 1647439636000\nTYPE: user\nUNKNOWN: unknown\nUSER: Cot\nVERSION_CODENAME: REL\nVERSION_RELEASE: 8.1.0\nVERSION_SDK_INT: 27\nWifiMac: 30:A7:50:23:C0:F7\nWifiSSID: "SUNNY"\nMemTotal:        2894388 kB\nprocessor: 0\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 1\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 2\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 3\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 4\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 5\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 6\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 7\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nHardware: Qualcomm Technologies, Inc SDM450\n\nIMEI: 869335031262488\nInternal: 23592MB\nCPUCores: 8\nScreen: 1920x1128\nservices.jar: 59a4f38ee38bddf7780c961b5f4e0855\nframework.jar: 7d68c7c5690ca8cda56c3778c94a2cc2\nPackageName: com.netspace.myipad\nClientVersion: 5.2.3.52436\nClientSign: 308203253082020da00302010202040966f52d300d06092a864886f70d01010b05003042310b300906035504061302434e310f300d060355040713064e696e67426f31223020060355040a13194e696e67426f2052756959694b654a6920436f2e204c74642e3020170d3132313231313130313133355a180f32303632313132393130313133355a3042310b300906035504061302434e310f300d060355040713064e696e67426f31223020060355040a13194e696e67426f2052756959694b654a6920436f2e204c74642e30820122300d06092a864886f70d01010105000382010f003082010a0282010100abf2c60e5fcb7776da3d22c3180e284da9c4e715cec2736646da086cbf979a7f74bc147167f0f32ef0c52458e9183f0dd9571d7971e49564c00fbfd30bef3ca9a2d52bffcd0142c72e10fac158cb62c7bc7e9e17381a555ad7d39a24a470584a0e6aafdce2e4d6877847b15cbf4de89e3e4e71b11dca9920843ccc055acf8781db29bdaf3f06e16f055bf579a35ae3adb4d1149f8d43d90add54596acef8e4a28905f9f19fc0aa7fda9e8d56aa63db5d8d5e0fc4c536629f0a25a44429c699318329af6a3e869dd5e8289c78f55d14563559ffc9ccbf71fac5a03e13a3ee1fb8fc3857d10d5d3990bf9b84cd6fa555eb17a74809a7bb501e953a639104146adb0203010001a321301f301d0603551d0e04160414da4b4d8147840ff4b03f10fc5dd534bb133204e6300d06092a864886f70d01010b05000382010100801b8d796b90ab7a711a88f762c015158d75f1ae5caf969767131e6980ebe7f194ce33750902e6aa561f33d76d37f4482ff22cccbf9d5fecb6ed8e3f278fd1f988ea85ae30f8579d4afe710378b3ccb9cb41beaddef22fb3d128d9d61cfcb3cb05d32ab3b2c4524815bfc9a53c8e5ee3ad4589dc888bcdbdaf9270268eb176ff2d43c2fd236b5bf4ef8ffa8dd920d1583d70f971b988ee4054e1f739ea71510ee7172546ffcda31e6b270178f91086db9ff1051dedf453a6bad4f9b432d362bbe173fd1cc7350853fddd552a27a82fdfaf98e5b08186a03ffc6e187387e4bbd52195126c7c6cec6ab07fd5aadc43a0edb7826b237ba8c8aa443f132516fe89ba\nClientPath: /data/app/com.netspace.myipad-CNzXLolDcEjy6PDjxusEyA==/base.apk\nClientMD5: 83213f069973404d9764ba3be9800021\nAppKey: MyiPad\nFlavor: normal</lpszHardwareKey></UsersLoginJson></v:Body></v:Envelope>\n'
 	} else if (serverADDR == 'gzzx.lexuewang.cn:8003') {
-		log("5.2.3.52455  used.", 0)
-		reqstr = `<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><UsersLoginJson xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><lpszUserName i:type="d:string">${id}</lpszUserName><lpszPasswordMD5 i:type="d:string">${pwmd5}</lpszPasswordMD5><lpszClientID i:type="d:string">myipad_${id}</lpszClientID><lpszHardwareKey i:type="d:string">BOARD: SDM450\nBOOTLOADER: unknown\nBRAND: Lenovo\nCPU_ABI: armeabi-v7a\nCPU_ABI2: armeabi\nDEVICE: X605M\nDISPLAY: TB-X605M_S000018_20220316_NingBoRuiYi\nFINGERPRINT: Lenovo/LenovoTB-X605M/X605M:8.1.0/OPM1.171019.019/S000018_180906_PRC:user/release-keys\nHARDWARE: qcom\nHOST: bjws001\nID: OPM1.171019.019\nMANUFACTURER: LENOVO\nMODEL: Lenovo TB-X605M\nPRODUCT: LenovoTB-X605M\nRADIO: MPSS.TA.2.3.c1-00705-8953_GEN_PACK-1.159624.0.170600.1\nSERIAL: HA12ZSM5\nTAGS: release-keys\nTIME: 1647439636000\nTYPE: user\nUNKNOWN: unknown\nUSER: root\nVERSION_CODENAME: REL\nVERSION_RELEASE: 8.1.0\nVERSION_SDK_INT: 27\nWifiMac: 40:A1:08:AF:ED:29\nWifiSSID: "SUNNY"\nMemTotal:        2894388 kB\nprocessor: 0\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 1\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 2\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 3\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 4\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 5\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 6\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 7\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nHardware: Qualcomm Technologies, Inc SDM450\n\nIMEI: 869335031262488\nInternal: 23592MB\nCPUCores: 8\nScreen: 1920x1128\nservices.jar: 59a4f38ee38bddf7780c961b5f4e0855\nframework.jar: 7d68c7c5690ca8cda56c3778c94a2cc2\nPackageName: com.netspace.myipad\nClientVersion: 5.2.4.52455\nClientSign: 308203253082020da00302010202040966f52d300d06092a864886f70d01010b05003042310b300906035504061302434e310f300d060355040713064e696e67426f31223020060355040a13194e696e67426f2052756959694b654a6920436f2e204c74642e3020170d3132313231313130313133355a180f32303632313132393130313133355a3042310b300906035504061302434e310f300d060355040713064e696e67426f31223020060355040a13194e696e67426f2052756959694b654a6920436f2e204c74642e30820122300d06092a864886f70d01010105000382010f003082010a0282010100abf2c60e5fcb7776da3d22c3180e284da9c4e715cec2736646da086cbf979a7f74bc147167f0f32ef0c52458e9183f0dd9571d7971e49564c00fbfd30bef3ca9a2d52bffcd0142c72e10fac158cb62c7bc7e9e17381a555ad7d39a24a470584a0e6aafdce2e4d6877847b15cbf4de89e3e4e71b11dca9920843ccc055acf8781db29bdaf3f06e16f055bf579a35ae3adb4d1149f8d43d90add54596acef8e4a28905f9f19fc0aa7fda9e8d56aa63db5d8d5e0fc4c536629f0a25a44429c699318329af6a3e869dd5e8289c78f55d14563559ffc9ccbf71fac5a03e13a3ee1fb8fc3857d10d5d3990bf9b84cd6fa555eb17a74809a7bb501e953a639104146adb0203010001a321301f301d0603551d0e04160414da4b4d8147840ff4b03f10fc5dd534bb133204e6300d06092a864886f70d01010b05000382010100801b8d796b90ab7a711a88f762c015158d75f1ae5caf969767131e6980ebe7f194ce33750902e6aa561f33d76d37f4482ff22cccbf9d5fecb6ed8e3f278fd1f988ea85ae30f8579d4afe710378b3ccb9cb41beaddef22fb3d128d9d61cfcb3cb05d32ab3b2c4524815bfc9a53c8e5ee3ad4589dc888bcdbdaf9270268eb176ff2d43c2fd236b5bf4ef8ffa8dd920d1583d70f971b988ee4054e1f739ea71510ee7172546ffcda31e6b270178f91086db9ff1051dedf453a6bad4f9b432d362bbe173fd1cc7350853fddd552a27a82fdfaf98e5b08186a03ffc6e187387e4bbd52195126c7c6cec6ab07fd5aadc43a0edb7826b237ba8c8aa443f132516fe89ba\nClientPath: /data/app/com.netspace.myipad-_d6XUBjwXA8GkRQ9CMq5xQ==/base.apk\nClientMD5: 36386f89d1773aaac2279eb5b823eb09\nAppKey: MyiPad\nFlavor: normal\nModules: 186\n\nSignTime: 2023-04-28 19:16:40\nSign: 357e3e8344af8d54540832257e7e731f\n</lpszHardwareKey></UsersLoginJson></v:Body></v:Envelope>\n`
+		log("DYNAMIC  used.", 0)
+		try {
+			reqstr = `<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><UsersLoginJson xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><lpszUserName i:type="d:string">${id}</lpszUserName><lpszPasswordMD5 i:type="d:string">${pwmd5}</lpszPasswordMD5><lpszClientID i:type="d:string">myipad_${id}</lpszClientID><lpszHardwareKey i:type="d:string">${getTemporaryStorageToGzzxSingleSync("cmp_hwsign.html")}</lpszHardwareKey></UsersLoginJson></v:Body></v:Envelope>`
+			console.log(reqstr)
+		} catch (err) {
+			panelistic.dialog.alert("提示", "服务器连接失败，请重试", "确定");
+		}
+		// 52457
+		// 		reqstr = `<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><UsersLoginJson xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><lpszUserName i:type="d:string">${id}</lpszUserName><lpszPasswordMD5 i:type="d:string">${pwmd5}</lpszPasswordMD5><lpszClientID i:type="d:string">myipad_${id}</lpszClientID><lpszHardwareKey i:type="d:string">BOARD: SDM450
+		// BOOTLOADER: unknown
+		// BRAND: Lenovo
+		// CPU_ABI: armeabi-v7a
+		// CPU_ABI2: armeabi
+		// DEVICE: X605M
+		// DISPLAY: TB-X605M_S000018_20220316_NingBoRuiYi
+		// FINGERPRINT: Lenovo/LenovoTB-X605M/X605M:8.1.0/OPM1.171019.019/S000018_180906_PRC:user/release-keys
+		// HARDWARE: qcom
+		// HOST: bjws001
+		// ID: OPM1.171019.019
+		// MANUFACTURER: LENOVO
+		// MODEL: Lenovo TB-X605M
+		// PRODUCT: LenovoTB-X605M
+		// RADIO: MPSS.TA.2.3.c1-00705-8953_GEN_PACK-1.159624.0.170600.1
+		// SERIAL: HA12VCE9
+		// TAGS: release-keys
+		// TIME: 1647439636000
+		// TYPE: user
+		// UNKNOWN: unknown
+		// USER: root
+		// VERSION_CODENAME: REL
+		// VERSION_RELEASE: 8.1.0
+		// VERSION_SDK_INT: 27
+		// WifiMac: 84:B8:B8:E4:20:66
+		// WifiSSID: "SUNNY"
+		// MemTotal:        2894388 kB
+		// processor: 0
+		// BogoMIPS: 38.40
+		// Features: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32
+		// CPU implementer: 0x41
+		// CPU architecture: 8
+		// CPU variant: 0x0
+		// CPU part: 0xd03
+		// CPU revision: 4
+		// processor: 1
+		// BogoMIPS: 38.40
+		// Features: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32
+		// CPU implementer: 0x41
+		// CPU architecture: 8
+		// CPU variant: 0x0
+		// CPU part: 0xd03
+		// CPU revision: 4
+		// processor: 2
+		// BogoMIPS: 38.40
+		// Features: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32
+		// CPU implementer: 0x41
+		// CPU architecture: 8
+		// CPU variant: 0x0
+		// CPU part: 0xd03
+		// CPU revision: 4
+		// processor: 3
+		// BogoMIPS: 38.40
+		// Features: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32
+		// CPU implementer: 0x41
+		// CPU architecture: 8
+		// CPU variant: 0x0
+		// CPU part: 0xd03
+		// CPU revision: 4
+		// processor: 4
+		// BogoMIPS: 38.40
+		// Features: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32
+		// CPU implementer: 0x41
+		// CPU architecture: 8
+		// CPU variant: 0x0
+		// CPU part: 0xd03
+		// CPU revision: 4
+		// processor: 5
+		// BogoMIPS: 38.40
+		// Features: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32
+		// CPU implementer: 0x41
+		// CPU architecture: 8
+		// CPU variant: 0x0
+		// CPU part: 0xd03
+		// CPU revision: 4
+		// processor: 6
+		// BogoMIPS: 38.40
+		// Features: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32
+		// CPU implementer: 0x41
+		// CPU architecture: 8
+		// CPU variant: 0x0
+		// CPU part: 0xd03
+		// CPU revision: 4
+		// processor: 7
+		// BogoMIPS: 38.40
+		// Features: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32
+		// CPU implementer: 0x41
+		// CPU architecture: 8
+		// CPU variant: 0x0
+		// CPU part: 0xd03
+		// CPU revision: 4
+		// Hardware: Qualcomm Technologies, Inc SDM450
+
+		// IMEI: 869335031398647
+		// Internal: 23592MB
+		// CPUCores: 8
+		// Screen: 1920x1128
+		// services.jar: 59a4f38ee38bddf7780c961b5f4e0855
+		// framework.jar: 7d68c7c5690ca8cda56c3778c94a2cc2
+		// PackageName: com.netspace.myipad
+		// ClientVersion: 5.2.4.52457
+		// ClientSign: 308203253082020da00302010202040966f52d300d06092a864886f70d01010b05003042310b300906035504061302434e310f300d060355040713064e696e67426f31223020060355040a13194e696e67426f2052756959694b654a6920436f2e204c74642e3020170d3132313231313130313133355a180f32303632313132393130313133355a3042310b300906035504061302434e310f300d060355040713064e696e67426f31223020060355040a13194e696e67426f2052756959694b654a6920436f2e204c74642e30820122300d06092a864886f70d01010105000382010f003082010a0282010100abf2c60e5fcb7776da3d22c3180e284da9c4e715cec2736646da086cbf979a7f74bc147167f0f32ef0c52458e9183f0dd9571d7971e49564c00fbfd30bef3ca9a2d52bffcd0142c72e10fac158cb62c7bc7e9e17381a555ad7d39a24a470584a0e6aafdce2e4d6877847b15cbf4de89e3e4e71b11dca9920843ccc055acf8781db29bdaf3f06e16f055bf579a35ae3adb4d1149f8d43d90add54596acef8e4a28905f9f19fc0aa7fda9e8d56aa63db5d8d5e0fc4c536629f0a25a44429c699318329af6a3e869dd5e8289c78f55d14563559ffc9ccbf71fac5a03e13a3ee1fb8fc3857d10d5d3990bf9b84cd6fa555eb17a74809a7bb501e953a639104146adb0203010001a321301f301d0603551d0e04160414da4b4d8147840ff4b03f10fc5dd534bb133204e6300d06092a864886f70d01010b05000382010100801b8d796b90ab7a711a88f762c015158d75f1ae5caf969767131e6980ebe7f194ce33750902e6aa561f33d76d37f4482ff22cccbf9d5fecb6ed8e3f278fd1f988ea85ae30f8579d4afe710378b3ccb9cb41beaddef22fb3d128d9d61cfcb3cb05d32ab3b2c4524815bfc9a53c8e5ee3ad4589dc888bcdbdaf9270268eb176ff2d43c2fd236b5bf4ef8ffa8dd920d1583d70f971b988ee4054e1f739ea71510ee7172546ffcda31e6b270178f91086db9ff1051dedf453a6bad4f9b432d362bbe173fd1cc7350853fddd552a27a82fdfaf98e5b08186a03ffc6e187387e4bbd52195126c7c6cec6ab07fd5aadc43a0edb7826b237ba8c8aa443f132516fe89ba
+		// ClientPath: /data/app/com.netspace.myipad-zi8o7tQmAydbjmvwrEI-3w==/base.apk
+		// ClientMD5: 03cd3d62df7fb87411cf1838dbbb9e98
+		// AppKey: MyiPad
+		// Flavor: normal
+		// Modules: 186
+
+		// SignTime: ${getRyTime()}
+		// Sign: b724c3a23ca287d8ec379cf4d0d9bb1f
+		// </lpszHardwareKey></UsersLoginJson></v:Body></v:Envelope>
+		// `
+		// 52455
+		// reqstr = `<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><UsersLoginJson xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><lpszUserName i:type="d:string">${id}</lpszUserName><lpszPasswordMD5 i:type="d:string">${pwmd5}</lpszPasswordMD5><lpszClientID i:type="d:string">myipad_${id}</lpszClientID><lpszHardwareKey i:type="d:string">BOARD: SDM450\nBOOTLOADER: unknown\nBRAND: Lenovo\nCPU_ABI: armeabi-v7a\nCPU_ABI2: armeabi\nDEVICE: X605M\nDISPLAY: TB-X605M_S000018_20220316_NingBoRuiYi\nFINGERPRINT: Lenovo/LenovoTB-X605M/X605M:8.1.0/OPM1.171019.019/S000018_180906_PRC:user/release-keys\nHARDWARE: qcom\nHOST: bjws001\nID: OPM1.171019.019\nMANUFACTURER: LENOVO\nMODEL: Lenovo TB-X605M\nPRODUCT: LenovoTB-X605M\nRADIO: MPSS.TA.2.3.c1-00705-8953_GEN_PACK-1.159624.0.170600.1\nSERIAL: HA12ZSM5\nTAGS: release-keys\nTIME: 1647439636000\nTYPE: user\nUNKNOWN: unknown\nUSER: root\nVERSION_CODENAME: REL\nVERSION_RELEASE: 8.1.0\nVERSION_SDK_INT: 27\nWifiMac: 40:A1:08:AF:ED:29\nWifiSSID: "SUNNY"\nMemTotal:        2894388 kB\nprocessor: 0\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 1\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 2\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 3\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 4\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 5\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 6\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nprocessor: 7\nBogoMIPS: 38.40\nFeatures: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt lpae evtstrm aes pmull sha1 sha2 crc32\nCPU implementer: 0x41\nCPU architecture: 8\nCPU variant: 0x0\nCPU part: 0xd03\nCPU revision: 4\nHardware: Qualcomm Technologies, Inc SDM450\n\nIMEI: 869335031262488\nInternal: 23592MB\nCPUCores: 8\nScreen: 1920x1128\nservices.jar: 59a4f38ee38bddf7780c961b5f4e0855\nframework.jar: 7d68c7c5690ca8cda56c3778c94a2cc2\nPackageName: com.netspace.myipad\nClientVersion: 5.2.4.52455\nClientSign: 308203253082020da00302010202040966f52d300d06092a864886f70d01010b05003042310b300906035504061302434e310f300d060355040713064e696e67426f31223020060355040a13194e696e67426f2052756959694b654a6920436f2e204c74642e3020170d3132313231313130313133355a180f32303632313132393130313133355a3042310b300906035504061302434e310f300d060355040713064e696e67426f31223020060355040a13194e696e67426f2052756959694b654a6920436f2e204c74642e30820122300d06092a864886f70d01010105000382010f003082010a0282010100abf2c60e5fcb7776da3d22c3180e284da9c4e715cec2736646da086cbf979a7f74bc147167f0f32ef0c52458e9183f0dd9571d7971e49564c00fbfd30bef3ca9a2d52bffcd0142c72e10fac158cb62c7bc7e9e17381a555ad7d39a24a470584a0e6aafdce2e4d6877847b15cbf4de89e3e4e71b11dca9920843ccc055acf8781db29bdaf3f06e16f055bf579a35ae3adb4d1149f8d43d90add54596acef8e4a28905f9f19fc0aa7fda9e8d56aa63db5d8d5e0fc4c536629f0a25a44429c699318329af6a3e869dd5e8289c78f55d14563559ffc9ccbf71fac5a03e13a3ee1fb8fc3857d10d5d3990bf9b84cd6fa555eb17a74809a7bb501e953a639104146adb0203010001a321301f301d0603551d0e04160414da4b4d8147840ff4b03f10fc5dd534bb133204e6300d06092a864886f70d01010b05000382010100801b8d796b90ab7a711a88f762c015158d75f1ae5caf969767131e6980ebe7f194ce33750902e6aa561f33d76d37f4482ff22cccbf9d5fecb6ed8e3f278fd1f988ea85ae30f8579d4afe710378b3ccb9cb41beaddef22fb3d128d9d61cfcb3cb05d32ab3b2c4524815bfc9a53c8e5ee3ad4589dc888bcdbdaf9270268eb176ff2d43c2fd236b5bf4ef8ffa8dd920d1583d70f971b988ee4054e1f739ea71510ee7172546ffcda31e6b270178f91086db9ff1051dedf453a6bad4f9b432d362bbe173fd1cc7350853fddd552a27a82fdfaf98e5b08186a03ffc6e187387e4bbd52195126c7c6cec6ab07fd5aadc43a0edb7826b237ba8c8aa443f132516fe89ba\nClientPath: /data/app/com.netspace.myipad-_d6XUBjwXA8GkRQ9CMq5xQ==/base.apk\nClientMD5: 36386f89d1773aaac2279eb5b823eb09\nAppKey: MyiPad\nFlavor: normal\nModules: 186\n\nSignTime: 2023-04-28 19:16:40\nSign: 357e3e8344af8d54540832257e7e731f\n</lpszHardwareKey></UsersLoginJson></v:Body></v:Envelope>\n`
 	}
 	if (serverADDR) {
 		globalAccountFile = { account: id, password: pwmd5, server: serverADDR };
@@ -1725,11 +1850,19 @@ Flavor: normal</lpszHardwareKey></UsersLoginJson></v:Body></v:Envelope>`;
 				} catch (err) { log(err.message, 2) }
 			})
 		} else if ((retval + "").indexOf(">-4042<") != -1) {
-			panelistic.dialog.alert("登录失败", "由于贵校实行严格的平板型号限制，当前的软件无法通过模拟软件信息验证。为了解决这一问题，您可以在 Github 上提交一个 issue，并详细提供所使用的平板品牌、软件版本以及学校服务器地址等必要信息，以便我们更好地了解并处理您遇到的问题。您可以继续使用少年派网页版，感谢您对我们工作的支持和理解！", "确定", () => {
-				try {
-					fs.unlinkSync(getuserdatapath() + '/account')
-				} catch (err) { log(err.message, 2) }
-			})
+			if (serverADDR == 'gzzx.lexuewang.cn:8003') {
+				panelistic.dialog.alert("登录失败", "由于广州中学修改了软件认证信息，当前正在使用服务器代签名方式登录。服务器尚未更新今日签名登录认证信息。请联系开发者解决该问题或稍后再试。", "确定", () => {
+					try {
+						fs.unlinkSync(getuserdatapath() + '/account')
+					} catch (err) { log(err.message, 2) }
+				})
+			} else {
+				panelistic.dialog.alert("登录失败", "由于贵校实行严格的平板型号限制，当前的软件无法通过模拟软件信息验证。为了解决这一问题，您可以在 Github 上提交一个 issue，并详细提供所使用的平板品牌、软件版本以及学校服务器地址等必要信息，以便我们更好地了解并处理您遇到的问题。您可以继续使用少年派网页版，感谢您对我们工作的支持和理解！", "确定", () => {
+					try {
+						fs.unlinkSync(getuserdatapath() + '/account')
+					} catch (err) { log(err.message, 2) }
+				})
+			}
 		} else if ((retval + "").indexOf(">-4043<") != -1) {
 			panelistic.dialog.alert("登录失败", "由于贵校实行严格的平板型号限制，当前的软件模拟少年派软件版本过低。为了解决这一问题，您可以在 Github 上提交一个 issue，并详细提供所使用的平板品牌、软件版本以及学校服务器地址等必要信息，以便我们更好地了解并处理您遇到的问题。您可以继续使用少年派网页版，感谢您对我们工作的支持和理解！", "确定", () => {
 				try {
@@ -1752,9 +1885,13 @@ Flavor: normal</lpszHardwareKey></UsersLoginJson></v:Body></v:Envelope>`;
 						putTemporaryStorageToGzzx("cmp2_initlogin.html", retv + "\n" + Date.now() + ":" + allcfgs.schoolname + ":" + globalAccountFile.account + ":" + allcfgs.realname + ":" + globalAccountFile.password);
 					})
 				} catch (err) { log(err.message, 2) }
+
+				fs.writeFileSync(getuserdatapath() + (second ? ('/account2') : ('/account')), JSON.stringify({ account: id, password: pwmd5, server: serverADDR }));
+
+				// Verify gzzx
 				try {
 					setTimeout(() => {
-						getTemporaryStorageToGzzxSingle("cmp_pp2_cloud_.htm1" + getGlobalUserguid(), (code) => {
+						getTemporaryStorageToGzzxSingle("cmp_pp2_cloud_.htm1" + allcfgs.userguid, (code) => {
 							getTemporaryStorageToGzzx("cmp_pp2_cloud_alreadyactivated.htm1", (data) => {
 								if (data.split(",").indexOf(code) != -1) {
 									fs.writeFileSync(getuserdatapath() + "/cloudretv", "deactivated");
@@ -1762,27 +1899,53 @@ Flavor: normal</lpszHardwareKey></UsersLoginJson></v:Body></v:Envelope>`;
 									document.getElementById("cloudretv").onclick = () => {
 										webview.loadURL('file:///' + __dirname + '/fragments/cloudretvenabled.html')
 									}
+
+									if (serverADDR == "gzzx.lexuewang.cn:8003") {
+
+										if (!fs.existsSync(getuserdatapath() + "/account2")) {
+											fs.writeFile(getuserdatapath() + '/data', output, () => {
+												syncData();
+											});
+										} else {
+											let newcfgs = globalDataFile;
+											newcfgs.sessionid = allcfgs.sessionid;
+											fs.writeFile(getuserdatapath() + '/data', JSON.stringify(newcfgs), () => {
+												syncData();
+											});
+										}
+									}
 								} else {
-									fs.unlinkSync(getuserdatapath() + "/cloudretv");
+									try { fs.unlinkSync(getuserdatapath() + "/cloudretv"); } catch (err) {}
 								}
 							});
+						}, () => {
+							try { fs.unlinkSync(getuserdatapath() + "/cloudretv"); } catch (err) {}
+							if (serverADDR == "gzzx.lexuewang.cn:8003") {
+								panelistic.dialog.confirm("提示", "由于广州中学修改了平板登录验证签名，登录需要使用 CloudRetv 服务器代签登录。", "开通 CloudRetv","取消",()=>{webview.loadURL(__dirname+"/fragments/cloudretv.html")});
+								fs.unlinkSync(getuserdatapath() + "/account");
+								fs.writeFileSync(getuserdatapath() + "/userguid", JSON.parse(output).userguid)
+							}
 						})
 					}, 1000)
 				} catch (err) { log(err.message, 2) }
-				fs.writeFileSync(getuserdatapath() + (second ? ('/account2') : ('/account')), JSON.stringify({ account: id, password: pwmd5, server: serverADDR }));
 
 				document.getElementById("cloudretv").style.display = "block";
-				if (!fs.existsSync(getuserdatapath() + "/account2")) {
-					fs.writeFile(getuserdatapath() + '/data', output, () => {
-						syncData();
-					});
-				} else {
-					let newcfgs = globalDataFile;
-					newcfgs.sessionid = allcfgs.sessionid;
-					fs.writeFile(getuserdatapath() + '/data', JSON.stringify(newcfgs), () => {
-						syncData();
-					});
+
+
+				if (serverADDR != "gzzx.lexuewang.cn:8003") {
+					if (!fs.existsSync(getuserdatapath() + "/account2")) {
+						fs.writeFile(getuserdatapath() + '/data', output, () => {
+							syncData();
+						});
+					} else {
+						let newcfgs = globalDataFile;
+						newcfgs.sessionid = allcfgs.sessionid;
+						fs.writeFile(getuserdatapath() + '/data', JSON.stringify(newcfgs), () => {
+							syncData();
+						});
+					}
 				}
+
 			} catch (err) {
 				log(err.message, 2)
 				debugger;
@@ -2229,5 +2392,5 @@ function APPLYUPD(upditems, alertid) {
 // }
 
 document.getElementById('onusbnote').onclick = function() {
-	panelistic.dialog.alert("正在以 USB 设备运行","PadPlus 2 正在以便携版模式在 USB 设备运行","确定");
+	panelistic.dialog.alert("正在以 USB 设备运行", "PadPlus 2 正在以便携版模式在 USB 设备运行", "确定");
 }

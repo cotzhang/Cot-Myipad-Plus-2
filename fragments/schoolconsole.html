@@ -123,6 +123,7 @@
 
 	function getUserListByUserId(userid, callback, callbackErr) {
 		totalreqcnt++;
+		console.log(userid)
 		getUserguidByUserid(userid, (guid) => {
 			autoRetryRestfulRequest("UsersGetUserInfoByGUID", "szUserGUID=" + guid, (info) => {
 				if (userid.indexOf("classmode_")!=-1) {callbackErr();return;}

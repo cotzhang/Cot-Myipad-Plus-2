@@ -7,14 +7,14 @@
     <script src="panelistic3.0-electron.js"></script>
     <script>
         fs = require('fs');
-	function isDev() {
-		return !fs.existsSync(process.cwd() + '/resources/app.asar');
-	}
-	let jssrc2 = "addition/func.js"
-	if (!isDev()) {
-		jssrc2="func.js"
-	}
-	document.write(`<script type="text/javascript" charset="UTF-8"
+    function isDev() {
+        return !fs.existsSync(process.cwd() + '/resources/app.asar');
+    }
+    let jssrc2 = "addition/func.js"
+    if (!isDev()) {
+        jssrc2="func.js"
+    }
+    document.write(`<script type="text/javascript" charset="UTF-8"
         src="${jssrc2}">
         </scr${''}ipt>`);
 </script>
@@ -124,26 +124,26 @@
         </span>
         <script>
             let totalstr = "";
-        	for (var i = 0; i < 90; i++) {
-        		totalstr+="<img class='emoji-item' src='src/smiley/smiley_"+i+".png' onclick='insertImageAtCursor("+i+")'></img>"
-        	}
-        	document.getElementById("emojigrid").innerHTML = totalstr;
+            for (var i = 0; i < 90; i++) {
+                totalstr+="<img class='emoji-item' src='src/smiley/smiley_"+i+".png' onclick='insertImageAtCursor("+i+")'></img>"
+            }
+            document.getElementById("emojigrid").innerHTML = totalstr;
         </script>
         <style>
             .emoji-grid {
-		      width: 100%;
-		      overflow-y: scroll;
-		      display: flex;
-		      flex-wrap: wrap;
-		      gap: 4px;
-		    }
-		    
-		    .emoji-item {
-		      width: 24px;
-		      height: 24px;
-		      margin: 2px;
-		    }
-  		</style>
+              width: 100%;
+              overflow-y: scroll;
+              display: flex;
+              flex-wrap: wrap;
+              gap: 4px;
+            }
+            
+            .emoji-item {
+              width: 24px;
+              height: 24px;
+              margin: 2px;
+            }
+        </style>
         <input type="button" value="发送" id="sendbtn" onclick="sendMsg()" style="position:absolute;right: 16px;bottom: 16px;">
         <script>
         ipcRenderer.on('selected-img', (event, filePath) => {
@@ -294,7 +294,7 @@
 
 
         function sendMsg() {
-        	document.getElementById('emojipanel').style.display='none'
+            document.getElementById('emojipanel').style.display = 'none'
             if (document.getElementById("iparea").innerHTML.trim() == "") { return; }
             let message = document.getElementById("iparea").innerHTML;
             let encodedMsg = encodeToUnicode(message).replaceAll('&#60;&#105;&#109;&#103; &#115;&#114;&#99;&#61;&#34;&#115;&#114;&#99;&#47;&#115;&#109;&#105;&#108;&#101;&#121;&#47;&#115;&#109;&#105;&#108;&#101;&#121;&#95;', `<img src="`).replaceAll('&#46;&#112;&#110;&#103;&#34; &#115;&#116;&#121;&#108;&#101;&#61;&#34;&#119;&#105;&#100;&#116;&#104;&#58; 24&#112;&#120;&#59; &#118;&#101;&#114;&#116;&#105;&#99;&#97;&#108;&#45;&#97;&#108;&#105;&#103;&#110;&#58; &#109;&#105;&#100;&#100;&#108;&#101;&#59;&#34;&#62;', '">')
@@ -312,28 +312,38 @@
             simpleRequest("https://" + getGlobalServerAddr() + "/SendResponse?sessionid=" + getGlobalSessionId() + "&clientid=" + to + "&guid=" + rdguid + "&from=" + from + "&expire=0", JSON.stringify({ guid: rdguid, expire: "0", content: content, from: from }), [], callback, () => { electron.ipcRenderer.sendToHost("提示", "消息发送失败", "确定") }, 1000)
         }
 
-        function model_bubbleright(realname, msgcont, useravatar,date) {
+        function model_bubbleright(realname, msgcont, useravatar, date) {
             return `
-			<div class="bubbleright">
-				<div style="display: inline-block;vertical-align: bottom;width: calc(100% - 80px)">
-					<span style="font-size: 11px;color: #666;">${date}</span>&nbsp;<span style="font-size: 11px;">${realname}</span><br>
-					<div class="msg" style="background-color: #aea;text-align: left;padding: 8px;top: 4px;position: relative;border-radius: 6px;max-width: 100%;display: inline-block;word-break: break-all;user-select:text">${msgcont}</div>
-				</div><img src="${useravatar}" onerror="this.src='src/no_pic.jpg'" style="height:30px;width:30px;margin: 4px;vertical-align:top;">
-			</div>`
+            <div class="bubbleright">
+                <div style="display: inline-block;vertical-align: bottom;width: calc(100% - 80px)">
+                    <span style="font-size: 11px;color: #666;">${date}</span>&nbsp;<span style="font-size: 11px;">${realname}</span><br>
+                    <div class="msg" style="background-color: #aea;text-align: left;padding: 8px;top: 4px;position: relative;border-radius: 6px;max-width: 100%;display: inline-block;word-break: break-all;user-select:text">${msgcont}</div>
+                </div><img src="${useravatar}" onerror="this.src='src/no_pic.jpg'" style="height:30px;width:30px;margin: 4px;vertical-align:top;">
+            </div>`
         }
 
-        function model_bubbleleft(realname, msgcont, useravatar,date) {
+        function model_bubbleleft(realname, msgcont, useravatar, date) {
             return `
-			<div class="bubbleleft"><img src="${useravatar}" onerror="this.src='src/no_pic.jpg'" style="height:30px;width:30px;margin: 4px;vertical-align:top;">
-				<div style="display: inline-block;vertical-align: bottom;width: calc(100% - 80px)">
-					<span style="font-size: 11px;">${realname}</span>&nbsp;<span style="font-size: 11px;color: #666;">${date}</span><br>
-					<div class="msg" style="background-color: #fff;padding: 8px;top: 4px;position: relative;border-radius: 6px;word-break: break-all;max-width: 100%;display: inline-block;user-select:text">${msgcont}</div>
-				</div>
-			</div>`
+            <div class="bubbleleft"><img src="${useravatar}" onerror="this.src='src/no_pic.jpg'" style="height:30px;width:30px;margin: 4px;vertical-align:top;">
+                <div style="display: inline-block;vertical-align: bottom;width: calc(100% - 80px)">
+                    <span style="font-size: 11px;">${realname}</span>&nbsp;<span style="font-size: 11px;color: #666;">${date}</span><br>
+                    <div class="msg" style="background-color: #fff;padding: 8px;top: 4px;position: relative;border-radius: 6px;word-break: break-all;max-width: 100%;display: inline-block;user-select:text">${msgcont}</div>
+                </div>
+            </div>`
         }
 
         function getMsgFrom(lpszFromClientID, callback) {
-            simpleRequest(`https://${getGlobalServerAddr()}/restful/IMResendHistoryMessage?lpszFromClientID=${lpszFromClientID}&lpszToClientID=${getGlobalPackageId()}&nCount=999999&nFrom=0`, "", [], (retval) => { callback(JSON.parse(JSON.parse(retval).szJsonResult)) }, () => { electron.ipcRenderer.sendToHost("alert", "提示", "获取消息失败，请重试", "确定") }, 10000, true)
+            // simpleRequest(`https://${getGlobalServerAddr()}/restful/IMResendHistoryMessage?lpszFromClientID=${lpszFromClientID}&lpszToClientID=${getGlobalPackageId()}&nCount=999999&nFrom=0`, "", [], (retval) => { callback(JSON.parse(JSON.parse(retval).szJsonResult)) }, () => { electron.ipcRenderer.sendToHost("alert", "提示", "获取消息失败，请重试", "确定") }, 10000, true)
+
+
+            let reqstr = `<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/" xmlns:v="http://schemas.xmlsoap.org/soap/envelope/"><v:Header /><v:Body><IMResendHistoryMessage xmlns="http://webservice.myi.cn/wmstudyservice/wsdl/" id="o0" c:root="1"><nFrom i:type="d:int">0</nFrom><nCount i:type="d:int">99999</nCount><lpszFromClientID i:type="d:string">${lpszFromClientID}</lpszFromClientID><lpszToClientID i:type="d:string">${getGlobalPackageId()}</lpszToClientID></IMResendHistoryMessage></v:Body></v:Envelope>`
+            autoRetryRequestWSDL('http://webservice.myi.cn/wmstudyservice/wsdl/IMResendHistoryMessage', reqstr, (result) => {
+                data = result + ""
+                var gotdatas = data.substring(data.indexOf('<AS:IMResendHistoryMessageResponse>') + 35, data.indexOf("<AS:IMResendHistoryMessageResult>"));
+                gotdatas = unEscape(gotdatas);
+                console.log(gotdatas)
+                callback(JSON.parse(gotdatas))
+            }, 500, 1000)
         }
 
 
@@ -383,9 +393,9 @@
                         cont = adaptImgToSrc(JSON.parse(allmsgs[i].text).content.substr(5, JSON.parse(allmsgs[i].text).content.indexOf('\nfields') - 5))
                     }
                     if (allmsgs[i].from == getGlobalPackageId()) {
-                        allstrs += model_bubbleright(getGlobalUsrname(), cont, `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${getGlobalPackageId()}&packageid=UserAvatar_${globalAccountFile.account}`,allmsgs[i].date);
+                        allstrs += model_bubbleright(getGlobalUsrname(), cont, `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${getGlobalPackageId()}&packageid=UserAvatar_${globalAccountFile.account}`, allmsgs[i].date);
                     } else {
-                        allstrs += model_bubbleleft(alldatas.username, cont, `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${clientid}&packageid=UserAvatar_${clientid.match(/\d+/g)}`,allmsgs[i].date);
+                        allstrs += model_bubbleleft(alldatas.username, cont, `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${clientid}&packageid=UserAvatar_${clientid.match(/\d+/g)}`, allmsgs[i].date);
                     }
                 }
                 document.getElementById('chatarea').innerHTML = allstrs;
@@ -468,9 +478,9 @@
                         cont = adaptImgToSrc(JSON.parse(allmsgs[i].text).content.substr(5, JSON.parse(allmsgs[i].text).content.indexOf('\nfields') - 5))
                     }
                     if (extractText(JSON.parse(allmsgs[i].text).content) == getGlobalUsrname()) {
-                        allstrs += model_bubbleright(getGlobalUsrname(), cont, `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${getGlobalPackageId()}&packageid=UserAvatar_${globalAccountFile.account}`,allmsgs[i].date);
+                        allstrs += model_bubbleright(getGlobalUsrname(), cont, `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${getGlobalPackageId()}&packageid=UserAvatar_${globalAccountFile.account}`, allmsgs[i].date);
                     } else {
-                        allstrs += model_bubbleleft(extractText(JSON.parse(allmsgs[i].text).content), cont, `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${clientid}&packageid=UserAvatar_${clientid.match(/\d+/g)}`,allmsgs[i].date);
+                        allstrs += model_bubbleleft(extractText(JSON.parse(allmsgs[i].text).content), cont, `https://${getGlobalServerAddr()}/DataSynchronizeGetSingleData?clientid=${clientid}&packageid=UserAvatar_${clientid.match(/\d+/g)}`, allmsgs[i].date);
                     }
                 }
                 document.getElementById('chatarea').innerHTML = allstrs;

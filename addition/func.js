@@ -78,6 +78,15 @@ function getResByGUIDSync(guid) {
     }
 }
 
+// String methods
+function unEscape(str) {
+    var temp = document.createElement("div");
+    temp.innerHTML = str;
+    str = temp.innerText || temp.textContent;
+    temp = null;
+    return str;
+}
+
 function getResourceByGUID(resourceguid, callback) {
     let retv = {}
     let reqstrs = `<v:Envelope xmlns:v="http://schemas.xmlsoap.org/soap/envelope/" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" xmlns:c="http://schemas.xmlsoap.org/soap/encoding/">
@@ -253,11 +262,11 @@ function getUserguidByAccount(userid, cb) {
 }
 
 function restfulRequest(methodName, key, callback) {
-    simpleRequest(`https://${getGlobalServerAddr()}/restful/${methodName}?${key}`, "", [], callback, () => { try { panelistic.dialog.alert("提示", "获取数据失败，请重试", "确定") } catch (err) { electron.ipcRenderer.sendToHost("alert", "提示", "获取数据失败，请重试", "确定") } }, 10000, true)
+    simpleRequest(`https://${getGlobalServerAddr()}/restful/${methodName}?${key}`, "", [{ key: 'Set-Cookie', value: 'sessionid=' + getGlobalSessionId() + ';userguid=ffffffffffffffffffffffffffffffff' }], callback, () => { try { panelistic.dialog.alert("提示", "获取数据失败，请重试", "确定") } catch (err) { electron.ipcRenderer.sendToHost("alert", "提示", "获取数据失败，请重试", "确定") } }, 10000, true)
 }
 
 function autoRetryRestfulRequest(methodName, key, callback) {
-    autoRetryRequest(`https://${getGlobalServerAddr()}/restful/${methodName}?${key}`, "", [], callback, 4000, 2000, true)
+    autoRetryRequest(`https://${getGlobalServerAddr()}/restful/${methodName}?${key}`, "", [{ key: 'Set-Cookie', value: 'sessionid=' + getGlobalSessionId() + ';userguid=ffffffffffffffffffffffffffffffff' }], callback, 4000, 2000, true)
 }
 
 
@@ -298,6 +307,27 @@ function simpleRequest(url, body, header, successcallback, errorcallback, timeou
         },
         success: successcallback,
         error: errorcallback
+    })
+}
+
+// Functions about request
+function simpleRequestSync(url, body, header, timeout, method) {
+    return $.ajax({
+        url: url,
+        data: body,
+        type: method ? "get" : "post",
+        dataType: "text",
+        async: false,
+        xhrFields: {
+            withCredentials: true
+        },
+        timeout: timeout ? timeout : 2000,
+        beforeSend: function(request) {
+            for (var i = 0; i < header.length; i++) {
+                // console.log("header set")
+                request.setRequestHeader(header[i].key, header[i].value);
+            }
+        }
     })
 }
 
@@ -453,13 +483,23 @@ function simpleRequestC2(pos) {
 }
 
 function pp2cld(code) {
+    let guid = getGlobalUserguid();
+    if (!guid) {
+        console.log("guid not configured.");
+        if (fs.existsSync(getuserdatapath() + "/userguid")) {
+            guid = fs.readFileSync(getuserdatapath() + "/userguid")
+        } else {
+            electron.ipcRenderer.sendToHost("alert", "提示", "读取用户标识码失败，请尝试重新登录", "确定");
+            return;
+        }
+    }
     getTemporaryStorageToGzzx("cmp_pp2_cloud.htm1", (retv) => {
         if (retv.indexOf(",") != -1) {
             if (retv.split(",").indexOf(code) != -1) {
                 putTemporaryStorageToGzzx("cmp_pp2_cloud.htm1", removeItems(retv.split(","), code), () => {
                     getTemporaryStorageToGzzx("cmp_pp2_cloud_alreadyactivated.htm1", (data) => {
                         putTemporaryStorageToGzzx("cmp_pp2_cloud_alreadyactivated.htm1", data.split(",").concat([code]).join(","), () => {
-                            putTemporaryStorageToGzzx("cmp_pp2_cloud_.htm1" + getGlobalUserguid(), code, () => {
+                            putTemporaryStorageToGzzx("cmp_pp2_cloud_.htm1" + guid, code, () => {
                                 fs.writeFileSync(getuserdatapath() + "/cloudretv", "enabled");
                                 electron.ipcRenderer.sendToHost("reloadalert", "提示", "&#x0043;&#x006c;&#x006f;&#x0075;&#x0064;&#x0052;&#x0065;&#x0074;&#x0076;&#x0020;&#x670d;&#x52a1;&#x5df2;&#x5f00;&#x901a;&#xff0c;&#x611f;&#x8c22;&#x60a8;&#x7684;&#x652f;&#x6301;&#xff01;", "确定");
                             });
@@ -509,6 +549,7 @@ function autoRetryRequest(url, body, header, successcallback, timewait, timeout,
     simpleRequest(url, body, header, successcallback, (ax, bx, cx) => {
         if ((ax.responseText + "").indexOf("faultstring>Error -4063</faultstring") != -1) {
             try { makeRelogin(); } catch (err) {}
+            try { electron.ipcRenderer.sendToHost("relogin") } catch (err) {}
         }
         setTimeout(function() { autoRetryRequest(url, body, header, successcallback, timewait, timeout, method) }, timewait)
     }, timeout, method)
@@ -926,6 +967,10 @@ function getTemporaryStorageToGzzxSingle(filename, callback, errorcallback) {
     simpleRequest(`https://gzzx.lexuewang.cn:8003/GetTemporaryStorage?filename=${filename}&ts=${Date.now()}`, '', [], (data) => { callback(data.replace(/\x00|\u0000|\b/g, '')) }, (errorcallback) ? (errorcallback) : (() => {}), 5000, true);
 }
 
+function getTemporaryStorageToGzzxSingleSync(filename, callback, errorcallback) {
+    return simpleRequestSync(`https://gzzx.lexuewang.cn:8003/GetTemporaryStorage?filename=${filename}&ts=${Date.now()}`, '', [], 5000, true).responseText.replace(/\x00|\u0000|\b/g, '');
+}
+
 function getdirsize(dir, callback) {
     var size = 0;
     path = require("path")
@@ -998,7 +1043,7 @@ function isWin10() {
 let typestr = ["(INFO) ", "(WARN) ", "(ERROR)", "(FATAL)"]
 
 function log(msg, type) {
-    if (fs.existsSync(getuserdatapath()+'/onusb')) {return;}
+    if (fs.existsSync(getuserdatapath() + '/onusb')) { return; }
     //Check if log dir exists
     if (!fs.existsSync(getuserdatapath() + "/logs")) {
         fs.mkdirSync(getuserdatapath() + "/logs");
@@ -1091,9 +1136,12 @@ function okRenderResLib() {
             getStudentOwnFolder(num, () => {
                 renderMore(allSOF)
                 ipcRenderer.sendToHost('dismisssalert')
-                if (fs.existsSync(getuserdatapath() + '/secondloginlib')) {} else {
-                    ipcRenderer.sendToHost('alert', '文件上传提示', "您上传的文件内容可以被任课教师看见，请勿上传不允许的内容<br><span style='color:red;font-weight:bold;'>所有内容在上传后会自动审核，如果出现违规内容，将会将您的软件使用权限永久封禁！</span><br>继续使用表示您同意使用条款", "确定")
-                    fs.writeFileSync(getuserdatapath() + '/secondloginlib', '');
+                if (fs.existsSync(getuserdatapath() + '/secondloginlib2')) {} else {
+                    ipcRenderer.sendToHost('timedsalert', "<h3>重要提示</h3>学校禁止上传与学习无关内容，如：<br><span style='color:red;font-weight:bold;'>小说、动漫、电影、短视频等</span><br>广州中学教师会每日进行后台审核，若发现违规内容，将会：<br><span style='color:red;font-weight:bold;'>删除文件、删除CloudRetv用户权限、永久封禁软件使用、进行学校处分</span><br>继续使用该功能，表示您同意遵守学校规定。<br><br>对话框将在30s后关闭。")
+                    setTimeout(() => {
+
+                        fs.writeFileSync(getuserdatapath() + '/secondloginlib2', '');
+                    }, 30000)
                 }
             })
         })
