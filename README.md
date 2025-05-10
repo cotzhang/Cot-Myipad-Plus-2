@@ -4,7 +4,9 @@ The desktop application for MyiPad.
 
 睿易少年派桌面客户端
 
-**[Note: This project is currently under the inspection of NingBoRuiYi]**
+由于睿易少年派已终止运营，该项目现已停止维护并无法正常使用，谨此感谢您一直以来的支持与关注。PadPlus2所有代码同步开源。
+
+**如下是对平板+1.0项目的介绍，对2.0项目的介绍请移步cotzhang.cn，对2.0版本的更新历史记录请见1.0仓库的release**
 
 ## 平板+
 
